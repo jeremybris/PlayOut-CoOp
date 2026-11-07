@@ -153,7 +153,15 @@ namespace Nucleus.Gaming.Headless
             GenericGameInfo info = GameManager.Instance.LoadHandlerFile(handlerPath);
             if (info.GUID == null)
             {
-                throw new InvalidOperationException($"Handler {Path.GetFileName(handlerPath)} failed: {info.LoadError ?? "no Game.GUID set"}");
+                string err = info.LoadError ?? "no Game.GUID set";
+                // GenericGameInfo pads every line with blank lines, so Jint's line numbers are doubled (Nucleus halves them too).
+                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(err, @"^Line (\d+):");
+                if (m.Success)
+                {
+                    err = $"Line {int.Parse(m.Groups[1].Value) / 2}:" + err.Substring(m.Length);
+                }
+
+                throw new InvalidOperationException($"Handler {Path.GetFileName(handlerPath)} failed: {err}");
             }
 
             return info;

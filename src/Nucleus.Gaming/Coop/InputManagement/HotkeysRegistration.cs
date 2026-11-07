@@ -1,4 +1,6 @@
-﻿using Nucleus.Gaming.Windows.Interop;
+﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
+// configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/InputManagement/HotkeysRegistration.cs
+using Nucleus.Gaming.Windows.Interop;
 using System.Windows.Forms;
 using System;
 using Nucleus.Gaming.App.Settings;

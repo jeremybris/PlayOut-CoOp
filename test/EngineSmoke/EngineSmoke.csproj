@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Smoke test for the headless engine (not the PlayOutCoop.exe CLI). 32-bit like NucleusCoop.exe. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>EngineSmoke</AssemblyName>
+    <RootNamespace>EngineSmoke</RootNamespace>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>true</Prefer32Bit>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\bin\test\$(Configuration)\EngineSmoke\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Nucleus.Gaming\Nucleus.Gaming.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+</Project>

@@ -1,4 +1,6 @@
-﻿using Nucleus.Coop.Forms;
+﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
+// configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/InputManagement/Gamepads/GamepadShortcuts.cs
+using Nucleus.Coop.Forms;
 using Nucleus.Gaming.App.Settings;
 using Nucleus.Gaming.Tools.GlobalWindowMethods;
 using Nucleus.Gaming.Windows;

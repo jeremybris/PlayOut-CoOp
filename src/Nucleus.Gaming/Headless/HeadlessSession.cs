@@ -34,7 +34,8 @@ namespace Nucleus.Gaming.Headless
         public event Action<string> Ended;
 
         public bool HasEnded => Handler?.HasEnded ?? false;
-        public string Error => Handler?.error;
+        /// <summary>Play's error, or the last error/warning dialog text when the launch was aborted.</summary>
+        public string Error => !string.IsNullOrEmpty(Handler?.error) ? Handler.error : (EndReason == "error" ? EngineUI.LastMessage : null);
         public string EndReason { get; private set; }
 
         /// <summary>PIDs of the game processes Nucleus attached to, in instance order.</summary>
@@ -81,7 +82,9 @@ namespace Nucleus.Gaming.Headless
 
         private void OnEnded()
         {
-            EndReason = stopRequested ? "stopped" : (!string.IsNullOrEmpty(Handler?.error) ? "error" : "exited");
+            // End() before Play() returned, without Stop() = Nucleus aborted the launch (e.g. UnlockGameFiles failed).
+            bool abortedDuringPlay = !playFinishedEvent.WaitOne(0);
+            EndReason = stopRequested ? "stopped" : (!string.IsNullOrEmpty(Handler?.error) || abortedDuringPlay ? "error" : "exited");
             endedEvent.Set();
             try { Ended?.Invoke(EndReason); } catch { }
         }

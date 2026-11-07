@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Test game for PlayOut Co-Op: shows its PID, window rect, arguments and XInput state. Not shipped. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>CoopDummy</AssemblyName>
+    <RootNamespace>CoopDummy</RootNamespace>
+    <PlatformTarget>x86</PlatformTarget>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\bin\test\$(Configuration)\CoopDummy\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+</Project>

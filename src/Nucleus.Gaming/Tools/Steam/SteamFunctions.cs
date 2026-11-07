@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
+// configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/Steam/SteamFunctions.cs
+using Microsoft.Win32;
 using Nucleus.Gaming.App.Settings;
 using Nucleus.Gaming.Coop;
 using Nucleus.Gaming.Forms;

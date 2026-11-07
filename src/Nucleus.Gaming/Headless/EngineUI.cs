@@ -126,9 +126,17 @@ namespace Nucleus.Gaming.Headless
             return $"{Path.GetFileName(file)}:{member}:{line}";
         }
 
+        /// <summary>The last MessageBox (error/warning icon) or NucleusMessageBox text: usually why a launch stopped.</summary>
+        public static string LastMessage { get; private set; }
+
         private static EngineUiResponse Ask(EngineUiRequest req)
         {
             Log("UI", $"{req.Source} {req}");
+
+            if (req.Kind == EngineUiKind.NucleusMessageBox || (req.Kind == EngineUiKind.MessageBox && (req.Icon == MessageBoxIcon.Error || req.Icon == MessageBoxIcon.Warning)))
+            {
+                LastMessage = string.IsNullOrEmpty(req.Title) ? req.Message : req.Title + ": " + req.Message;
+            }
             EngineUiResponse resp = null;
 
             try
