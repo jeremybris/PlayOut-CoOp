@@ -253,6 +253,14 @@ Still shown, because these are not Nucleus dialogs:
 - `--prompts native` with `test/handlers/Coop Dummy Prompts.js`: file picker, text prompt, Yes/No question and
   "Press OK" pause shown top-most and answered by sending Enter / IDCANCEL to the windows; the answers reached the
   game (`--name TestName --answer 6`). A `stop` while the file picker was open closed it and ended the session.
+- Independent re-verification (2026-11-07, clean build, fresh engine root, not elevated): the above again, plus the
+  games closing their own windows (`exited`, content folder gone, original identical), hard links and copies of
+  read-only and hidden files, a dangling junction, a 6-second wait on each native prompt (the launch did not go on
+  until it was answered), a missing `--parent` PID, `HardlinkGame` and `HardcopyGame` handlers, `inspect` on 73 hub
+  handlers, and DualHorizontal placement (top and bottom halves of the 1920x1200 screen). The copy-only path
+  (`PLAYOUTCOOP_NO_SYMLINKS=1` + `PLAYOUTCOOP_NO_HARDLINKS=1`) copied every file and cleaned up; with
+  `PLAYOUTCOOP_COPY_RESERVE_MB` above the free space it refused with an `error` before copying (`ended` `error`). No
+  `consent.exe` (UAC) was ever seen during these runs.
 
 ## Known gaps
 
@@ -262,6 +270,11 @@ Still shown, because these are not Nucleus dialogs:
 - SDL2 controllers: no enumeration or factory yet. `SDLManager` needs `SDL2.dll` and its init thread.
 - The CLI cannot see raw keyboard/mouse names for the HandleZero pseudo devices; pass `0x0` handles for the
   shared keyboard.
-- Cross-volume copy fallback of `GameLinks` not exercised (the test machine has one volume); `allowElevation` not run (it shows UAC).
+- Cross-volume copy fallback of `GameLinks` only simulated with the test switches (the test machine has one volume);
+  `allowElevation` not run (it shows UAC).
+- Hard links (and symbolic links, as upstream) share the original file: a handler or Nucleus tool that overwrites a
+  linked instance file in place (`File.Copy(..., true)` onto it, e.g. Goldberg's `CustomSteamApiDllPath` branch) changes
+  the original game file. Upstream has the same with its symbolic links; handlers avoid it with
+  `FileSymlinkExclusions` / `FileSymlinkCopyInstead`.
 - The Nucleus UI classes (`Controls/*`, `Forms/*`) are still compiled into `Nucleus.Gaming.dll`, unused when headless.
 - The hub update check (`MetaInfo.CheckUpdate`) is never triggered: handlers load with `checkUpdate = {false, false}`.

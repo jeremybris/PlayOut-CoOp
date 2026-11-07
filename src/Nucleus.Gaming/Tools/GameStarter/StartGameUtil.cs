@@ -3,6 +3,8 @@
 // Modified again 2026-11-07: SymlinkGame links in-process through Headless.GameLinks, never elevated, unless
 // GameLinks.AllowElevation (job "allowElevation") asks for Nucleus's elevated StartGame.exe. UnlockGameFiles remembers the
 // attributes it clears on the original game files; RestoreGameFileAttributes() puts them back when the session ends.
+// Modified again 2026-11-07 (later): when files can only be copied (no symbolic or hard links), the copy is refused
+// before it starts if it would not fit on the drive.
 // See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/GameStarter/StartGameUtil.cs
 using Nucleus.Gaming.Forms;
 using System;
@@ -260,6 +262,7 @@ namespace Nucleus.Gaming.Tools.GameStarter
 
             Headless.GameLinks.ResetCounters();
             Headless.EngineUI.Log("LINK", $"{(hardLink ? "Hard-linking" : "Linking")} {rootDir} into {numPlayers} instance folder(s) under {parent} (symlink folders: {symFolders}, no elevation)");
+            CheckCopyFallback(rootDir, parent, hardLink, symFolders, numPlayers);
             Stopwatch sw = Stopwatch.StartNew();
 
             for (int p = 0; p < numPlayers; p++)
@@ -269,6 +272,62 @@ namespace Nucleus.Gaming.Tools.GameStarter
             }
 
             Headless.EngineUI.Log("LINK", $"Instance folders ready in {sw.ElapsedMilliseconds} ms: {Headless.GameLinks.Summary()}");
+        }
+
+        // PlayOut Co-Op: when neither a symbolic link nor a hard link can be made from the game folder into the instance
+        // folders (Developer Mode off and another drive, or a FAT/exFAT drive), every linked file would be copied for
+        // every player. Refuse before copying anything if that does not fit on the drive (keeping
+        // GameLinks.CopyReserveBytes free), and log how much is copied when it does.
+        private static void CheckCopyFallback(string rootDir, string parent, bool hardLink, bool symFolders, int numPlayers)
+        {
+            string sample = null;
+            try
+            {
+                foreach (string f in Directory.EnumerateFiles(rootDir, "*", SearchOption.AllDirectories))
+                {
+                    sample = f;
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Headless.EngineUI.Log("LINK", "Could not list the game folder for the link check: " + ex.Message);
+                return;
+            }
+
+            if (sample == null || Headless.GameLinks.CanLinkFiles(sample, parent, hardLink))
+            {
+                return;
+            }
+
+            // With SymlinkFolders the subfolders become junctions, so only the files at the top are copied.
+            long perInstance = 0;
+            try
+            {
+                foreach (string f in Directory.EnumerateFiles(rootDir, "*", symFolders ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories))
+                {
+                    try { perInstance += new FileInfo(f).Length; } catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Headless.EngineUI.Log("LINK", "Could not measure the game folder: " + ex.Message);
+            }
+
+            long needed = perInstance * numPlayers;
+            long free = Headless.GameLinks.FreeBytes(parent);
+            string Gb(long b) => b >= 1073741824
+                ? (b / 1073741824.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " GB"
+                : (b / 1048576.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " MB";
+            Headless.EngineUI.Log("LINK", $"Neither symbolic nor hard links work from {rootDir} into {parent}: the game files are copied " +
+                $"({Gb(needed)} for {numPlayers} instance(s), {(free < 0 ? "unknown" : Gb(free))} free)");
+
+            if (free >= 0 && needed > free - Headless.GameLinks.CopyReserveBytes)
+            {
+                throw new IOException($"The game cannot be linked into {parent} (symbolic links need Windows Developer Mode, hard links need the " +
+                    $"same NTFS drive as the game) and copying it would need {Gb(needed)} with only {Gb(free)} free ({Gb(Headless.GameLinks.CopyReserveBytes)} is always kept free). Turn on Developer Mode, or put " +
+                    "the instance folders (job \"contentRoot\") on the game's NTFS drive.");
+            }
         }
 
         public static bool UnlockGameFiles(string origGameDir)

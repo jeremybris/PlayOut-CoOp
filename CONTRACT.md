@@ -109,7 +109,10 @@ job.json:
   `DirSymlinkCopyInstead` — which are excluded, and `SymlinkFolders`). Per item it first makes an unprivileged
   symbolic link (works with Windows Developer Mode on); when Windows refuses that, folders become NTFS directory
   junctions and files become hard links (same volume) or plain copies (other volume, FAT/exFAT). `HardlinkGame`
-  makes hard links, falling back to copies. The log (`[LINK]` lines) says which methods were used. Cleanup never
+  makes hard links, falling back to copies. When neither a symbolic link nor a hard link is possible, the helper
+  measures what would be copied for all players first and, if that would leave less than 2 GB free on that drive,
+  fails with an `error` (`ended` `"reason":"error"`) before copying anything; the message says to turn on Developer
+  Mode or set `contentRoot` on the game's NTFS drive. The log (`[LINK]` lines) says which methods were used. Cleanup never
   follows a link or junction: it removes the link itself, so the original game files are never deleted or changed.
   Nucleus clears the attributes (read-only etc.) of the original game files before linking; the helper puts them
   back when the session ends.
@@ -158,3 +161,5 @@ Handler download/indexing/extraction, tool download, choosing players/devices/la
   `allowElevation`; events `prompt` / `promptAnswered` (and the existing `ui` event documented); game files are linked
   without elevation (no UAC) unless `allowElevation`; the Ctrl+E hotkey / gamepad stop now ends with
   `"reason":"stopped"` (was `exited`).
+- 2026-11-07 (later): when game files can only be copied (no symbolic or hard links), a copy that would leave less than
+  2 GB free fails with an `error` before anything is copied.

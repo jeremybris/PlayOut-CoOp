@@ -80,6 +80,12 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
   made a link (Nucleus did; every such call failed or tried to copy a file onto itself). `SymlinkFoldersTo` /
   `HardlinkFoldersTo` use the same helpers. The methods used are logged (`[LINK]`). Test switch:
   `PLAYOUTCOOP_NO_SYMLINKS=1` behaves as if symbolic links were not allowed.
+- **Copy fallback cannot fill the drive (2026-11-07, later):** before linking, `StartGameUtil` probes once whether a
+  symbolic or hard link can be made from the game folder into the instance folders. If neither works (Developer Mode
+  off and another drive, or FAT/exFAT), it measures what would be copied for all players and refuses with an error,
+  before copying anything, when that would leave less than 2 GB free. `GameLinks.LinkFile` checks the free space again
+  before every copy. Test switches: `PLAYOUTCOOP_NO_HARDLINKS=1` (as if hard links were not possible) and
+  `PLAYOUTCOOP_COPY_RESERVE_MB=<n>` (the space kept free).
 - **Safe content cleanup (2026-11-07):** `CleanGameContent` deletes the content folder with `GameLinks.DeleteTree`,
   which never enters a symbolic link or junction (it removes the link itself) and deletes read-only hard links without
   clearing the read-only attribute of the original. Upstream's fallback enumerated through links, reset attributes and

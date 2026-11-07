@@ -51,6 +51,9 @@ namespace Nucleus.Gaming.Headless
         /// <summary>Test switch: behave as if symbolic links were not allowed (env PLAYOUTCOOP_NO_SYMLINKS=1).</summary>
         public static bool ForceNoSymlinks = Environment.GetEnvironmentVariable("PLAYOUTCOOP_NO_SYMLINKS") == "1";
 
+        /// <summary>Test switch: behave as if hard links were not possible (env PLAYOUTCOOP_NO_HARDLINKS=1), i.e. another drive.</summary>
+        public static bool ForceNoHardLinks = Environment.GetEnvironmentVariable("PLAYOUTCOOP_NO_HARDLINKS") == "1";
+
         private const int SYMBOLIC_LINK_FLAG_DIRECTORY = 0x1;
         private const int SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 0x2;
         private const int ERROR_INVALID_PARAMETER = 87;
@@ -202,20 +205,23 @@ namespace Nucleus.Gaming.Headless
                 }
             }
 
-            if (CreateHardLinkW(link, target, IntPtr.Zero))
+            if (!ForceNoHardLinks && CreateHardLinkW(link, target, IntPtr.Zero))
             {
                 return Count(LinkMethod.HardLink);
             }
 
-            int hlErr = Marshal.GetLastWin32Error();
+            int hlErr = ForceNoHardLinks ? 17 /* ERROR_NOT_SAME_DEVICE */ : Marshal.GetLastWin32Error();
             if (hlErr == ERROR_ALREADY_EXISTS || hlErr == ERROR_FILE_EXISTS)
             {
                 return Count(LinkMethod.Exists);
             }
 
+            // Different volume (ERROR_NOT_SAME_DEVICE), FAT/exFAT, or no access to the original: copy it, but never
+            // fill the drive (LinkInProcess's preflight normally refuses before this; this is the backstop).
+            EnsureRoomFor(link, target);
+
             try
             {
-                // Different volume (ERROR_NOT_SAME_DEVICE), FAT/exFAT, or no access to the original: copy it.
                 File.Copy(target, link, false);
                 return Count(LinkMethod.Copy);
             }
@@ -256,6 +262,86 @@ namespace Nucleus.Gaming.Headless
             {
                 Fail($"{link} -> {target}: junction: {ex.Message}");
                 return Count(LinkMethod.Failed);
+            }
+        }
+
+        // ---- copy fallback guard ---------------------------------------------------------------------------------
+
+        /// <summary>Free space the copy fallback always leaves on the destination drive.</summary>
+        public static readonly long CopyReserveBytes =
+            long.TryParse(Environment.GetEnvironmentVariable("PLAYOUTCOOP_COPY_RESERVE_MB"), out long mb) && mb >= 0 // test override
+                ? mb * 1024 * 1024
+                : 2L * 1024 * 1024 * 1024;
+
+        /// <summary>Free bytes available to this user on the volume of <paramref name="path"/> (a folder or file path), or -1.</summary>
+        public static long FreeBytes(string path)
+        {
+            try
+            {
+                string dir = Directory.Exists(path) ? path : Path.GetDirectoryName(path);
+                while (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    dir = Path.GetDirectoryName(dir);
+                }
+
+                if (!string.IsNullOrEmpty(dir) && GetDiskFreeSpaceExW(dir.EndsWith("\\") ? dir : dir + "\\", out ulong avail, out _, out _))
+                {
+                    return (long)Math.Min(avail, long.MaxValue);
+                }
+            }
+            catch
+            {
+            }
+
+            return -1;
+        }
+
+        private static void EnsureRoomFor(string link, string target)
+        {
+            long size;
+            try
+            {
+                size = new FileInfo(target).Length;
+            }
+            catch
+            {
+                return; // File.Copy reports it
+            }
+
+            long free = FreeBytes(link);
+            if (free >= 0 && size > free - CopyReserveBytes)
+            {
+                string msg = $"Not enough free space to copy {target} into {Path.GetDirectoryName(link)} ({size / 1048576} MB needed, " +
+                    $"{Math.Max(0, free) / 1048576} MB free, {CopyReserveBytes / 1048576} MB kept free). Symbolic and hard links are not possible there: " +
+                    "turn on Windows Developer Mode, or put the instance folders (job \"contentRoot\") on the game's NTFS drive.";
+                Fail(msg);
+                throw new IOException(msg);
+            }
+        }
+
+        /// <summary>
+        /// True if game files can be linked from <paramref name="sampleFile"/>'s folder into <paramref name="destDir"/>
+        /// (a symbolic link, or a hard link; hardLink = only a hard link counts). False = LinkFile will copy every file.
+        /// Probes with a throw-away link in destDir that is removed at once.
+        /// </summary>
+        public static bool CanLinkFiles(string sampleFile, string destDir, bool hardLink)
+        {
+            Directory.CreateDirectory(destDir);
+            string probe = Path.Combine(destDir, ".playoutcoop-linkprobe-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                if (!hardLink && TrySymlink(probe, sampleFile, false, out _))
+                {
+                    return true;
+                }
+
+                DeleteFileW(probe);
+                return !ForceNoHardLinks && CreateHardLinkW(probe, sampleFile, IntPtr.Zero);
+            }
+            finally
+            {
+                // Removes the link only (never the sample file it points at).
+                DeleteFileW(probe);
             }
         }
 
@@ -488,6 +574,10 @@ namespace Nucleus.Gaming.Headless
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool DeviceIoControl(SafeFileHandle hDevice, uint dwIoControlCode, byte[] lpInBuffer, int nInBufferSize,
             IntPtr lpOutBuffer, int nOutBufferSize, out int lpBytesReturned, IntPtr lpOverlapped);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool GetDiskFreeSpaceExW(string lpDirectoryName, out ulong lpFreeBytesAvailable, out ulong lpTotalNumberOfBytes,
+            out ulong lpTotalNumberOfFreeBytes);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool SetFileInformationByHandle(SafeFileHandle hFile, int fileInformationClass, ref uint info, int bufferSize);
