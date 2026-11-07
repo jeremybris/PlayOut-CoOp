@@ -105,6 +105,12 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
 - **No blocking dialog from StartGame.exe:** a failed launch is printed on stdout instead of a `MessageBox` (which
   blocked the engine, waiting for StartGame.exe to exit). `StartGameUtil.StartGame` no longer reuses the previous
   instance's PID line and fails with a clear message when StartGame.exe is missing or printed no PID.
+- **ProtoInput built for an older loader (2026-11-07):** Nucleus master calls 8 ProtoInput loader functions
+  (`SetTranslateXinputtoMKB`, `SetReregisterinput`, `SetTranslateMKBtoXinput`, `SetPointerInMouse`,
+  `SetSendMessagesToSubWindows`, `SetManualScaling`, `SetXinputtoMKBkeys`, `SetXinputtoMKBCFG`) that the ProtoInput in
+  the released Nucleus Co-op 2.4.2 does not export (its own engine never calls them), so every ProtoInput handler failed
+  with `EntryPointNotFoundException`. `ProtoInput.cs` now calls them through `CallOptional`: skipped when missing, with a
+  warning logged once when the handler actually turned the feature on.
 - **New program** `src/PlayOutCoop`: `PlayOutCoop.exe`, the command-line helper implementing
   [CONTRACT.md](CONTRACT.md) (`devices`, `inspect`, `play`).
 

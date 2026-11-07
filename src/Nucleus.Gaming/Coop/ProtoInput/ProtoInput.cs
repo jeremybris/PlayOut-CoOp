@@ -1,4 +1,7 @@
-﻿using Nucleus.Gaming.Coop.ProtoInput;
+// Modified for PlayOut Co-Op, 2026-11-07 (GPL-3 s.5a): the loader functions newer than the released ProtoInput are
+// called through CallOptional (skipped when missing). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/ProtoInput/ProtoInput.cs
+using Nucleus.Gaming;
+using Nucleus.Gaming.Coop.ProtoInput;
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Metadata;
@@ -613,27 +616,61 @@ namespace Nucleus.Gaming.Coop.ProtoInput
                 ProtoInput64.AddSelectedKeyboardHandle(instanceHandle, keyboardHandle);
             }
         }
+        // PlayOut Co-Op: these loader functions come from a newer ProtoInput than the one in the released Nucleus Co-op
+        // (2.4.2), whose engine never calls them. Missing from the installed ProtoInputLoader, a call is skipped instead
+        // of failing the whole session; a warning is logged once when the handler actually asked for the feature.
+        private static readonly System.Collections.Generic.HashSet<string> missingEntryPoints = new System.Collections.Generic.HashSet<string>();
+
+        private static void CallOptional(string entryPoint, bool featureUsed, Action call)
+        {
+            try
+            {
+                call();
+            }
+            catch (EntryPointNotFoundException)
+            {
+                bool first;
+                lock (missingEntryPoints)
+                {
+                    first = missingEntryPoints.Add(entryPoint);
+                }
+
+                if (first)
+                {
+                    LogManager.Log(featureUsed
+                        ? "[PROTOINPUT] WARNING: the installed ProtoInput has no " + entryPoint + "; the handler's setting for it is ignored"
+                        : "[PROTOINPUT] " + entryPoint + " is not in the installed ProtoInput (not used by this handler); skipped");
+                }
+            }
+        }
+
         public void SetTranslateXinputtoMKB(uint instanceHandle, bool enable)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetTranslateXinputtoMKB", enable, () =>
             {
-                ProtoInput32.SetTranslateXinputtoMKB(instanceHandle, enable);
-            }
-            else
-            {
-                ProtoInput64.SetTranslateXinputtoMKB(instanceHandle, enable);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetTranslateXinputtoMKB(instanceHandle, enable);
+                }
+                else
+                {
+                    ProtoInput64.SetTranslateXinputtoMKB(instanceHandle, enable);
+                }
+            });
         }
         public void SetReregisterinput(uint instanceHandle, bool enable)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetReregisterinput", enable, () =>
             {
-                ProtoInput32.SetReregisterinput(instanceHandle, enable);
-            }
-            else
-            {
-                ProtoInput64.SetReregisterinput(instanceHandle, enable);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetReregisterinput(instanceHandle, enable);
+                }
+                else
+                {
+                    ProtoInput64.SetReregisterinput(instanceHandle, enable);
+                }
+            });
         }
         public void InstallHook(uint instanceHandle, ProtoHookIDs hookID)
         {
@@ -877,14 +914,17 @@ namespace Nucleus.Gaming.Coop.ProtoInput
 
         public void SetTranslateMKBtoXinput(uint instanceHandle, bool TranslateMKBtoXinput)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetTranslateMKBtoXinput", TranslateMKBtoXinput, () =>
             {
-                ProtoInput32.SetTranslateMKBtoXinput(instanceHandle, TranslateMKBtoXinput);
-            }
-            else
-            {
-                ProtoInput64.SetTranslateMKBtoXinput(instanceHandle, TranslateMKBtoXinput);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetTranslateMKBtoXinput(instanceHandle, TranslateMKBtoXinput);
+                }
+                else
+                {
+                    ProtoInput64.SetTranslateMKBtoXinput(instanceHandle, TranslateMKBtoXinput);
+                }
+            });
         }
 
         public void SetShowCursorWhenImageUpdated(uint instanceHandle, bool enable)
@@ -1147,26 +1187,32 @@ namespace Nucleus.Gaming.Coop.ProtoInput
 
         public void SetPointerInMouse(uint instanceHandle, bool enable)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetPointerInMouse", enable, () =>
             {
-                ProtoInput32.SetPointerInMouse(instanceHandle, enable);
-            }
-            else
-            {
-                ProtoInput64.SetPointerInMouse(instanceHandle, enable);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetPointerInMouse(instanceHandle, enable);
+                }
+                else
+                {
+                    ProtoInput64.SetPointerInMouse(instanceHandle, enable);
+                }
+            });
         } //SendMessagesToSubWindows
 
         public void SetSendMessagesToSubWindows(uint instanceHandle, bool enable)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetSendMessagesToSubWindows", enable, () =>
             {
-                ProtoInput32.SetSendMessagesToSubWindows(instanceHandle, enable);
-            }
-            else
-            {
-                ProtoInput64.SetSendMessagesToSubWindows(instanceHandle, enable);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetSendMessagesToSubWindows(instanceHandle, enable);
+                }
+                else
+                {
+                    ProtoInput64.SetSendMessagesToSubWindows(instanceHandle, enable);
+                }
+            });
         } //SendMessagesToSubWindows
 
         public bool GetTaskbarAutohide()
@@ -1246,36 +1292,45 @@ namespace Nucleus.Gaming.Coop.ProtoInput
         }
         public void SetManualScaling(uint instanceHandle, int oldX, int oldY, int newX, int newY)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetManualScaling", oldX != 0 || oldY != 0, () =>
             {
-                ProtoInput32.SetManualScaling(instanceHandle, oldX, oldY, newX, newY);
-            }
-            else
-            {
-                ProtoInput64.SetManualScaling(instanceHandle, oldX, oldY, newX, newY);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetManualScaling(instanceHandle, oldX, oldY, newX, newY);
+                }
+                else
+                {
+                    ProtoInput64.SetManualScaling(instanceHandle, oldX, oldY, newX, newY);
+                }
+            });
         }
         public void SetXinputtoMKBkeys(uint instanceHandle, int XinputtoMKBAkey, int XinputtoMKBBkey, int XinputtoMKBXkey, int XinputtoMKBYkey, int XinputtoMKBRSkey, int XinputtoMKBLSkey, int XinputtoMKBrightkey, int XinputtoMKBleftkey, int XinputtoMKBupkey, int XinputtoMKBdownkey, int XinputtoMKBstickR, int XinputtoMKBstickL, int XinputtoMKBstickright, int XinputtoMKBstickleft, int XinputtoMKBstickup, int XinputtoMKBstickdown, int XinputtoMKBoption, int XinputtoMKBstart, int XinputtoMKBsens, int XinputtoMKBsensmult, int XinputtoMKBDeadzone)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetXinputtoMKBkeys", false, () =>
             {
-                ProtoInput32.SetXinputtoMKBkeys(instanceHandle, XinputtoMKBAkey, XinputtoMKBBkey, XinputtoMKBXkey, XinputtoMKBYkey, XinputtoMKBRSkey, XinputtoMKBLSkey, XinputtoMKBrightkey, XinputtoMKBleftkey, XinputtoMKBupkey, XinputtoMKBdownkey, XinputtoMKBstickR, XinputtoMKBstickL, XinputtoMKBstickright, XinputtoMKBstickleft, XinputtoMKBstickup, XinputtoMKBstickdown, XinputtoMKBoption, XinputtoMKBstart, XinputtoMKBsens, XinputtoMKBsensmult, XinputtoMKBDeadzone);
-            }
-            else
-            {
-                ProtoInput64.SetXinputtoMKBkeys(instanceHandle, XinputtoMKBAkey, XinputtoMKBBkey, XinputtoMKBXkey, XinputtoMKBYkey, XinputtoMKBRSkey, XinputtoMKBLSkey, XinputtoMKBrightkey, XinputtoMKBleftkey, XinputtoMKBupkey, XinputtoMKBdownkey, XinputtoMKBstickR, XinputtoMKBstickL, XinputtoMKBstickright, XinputtoMKBstickleft, XinputtoMKBstickup, XinputtoMKBstickdown, XinputtoMKBoption, XinputtoMKBstart, XinputtoMKBsens, XinputtoMKBsensmult, XinputtoMKBDeadzone);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetXinputtoMKBkeys(instanceHandle, XinputtoMKBAkey, XinputtoMKBBkey, XinputtoMKBXkey, XinputtoMKBYkey, XinputtoMKBRSkey, XinputtoMKBLSkey, XinputtoMKBrightkey, XinputtoMKBleftkey, XinputtoMKBupkey, XinputtoMKBdownkey, XinputtoMKBstickR, XinputtoMKBstickL, XinputtoMKBstickright, XinputtoMKBstickleft, XinputtoMKBstickup, XinputtoMKBstickdown, XinputtoMKBoption, XinputtoMKBstart, XinputtoMKBsens, XinputtoMKBsensmult, XinputtoMKBDeadzone);
+                }
+                else
+                {
+                    ProtoInput64.SetXinputtoMKBkeys(instanceHandle, XinputtoMKBAkey, XinputtoMKBBkey, XinputtoMKBXkey, XinputtoMKBYkey, XinputtoMKBRSkey, XinputtoMKBLSkey, XinputtoMKBrightkey, XinputtoMKBleftkey, XinputtoMKBupkey, XinputtoMKBdownkey, XinputtoMKBstickR, XinputtoMKBstickL, XinputtoMKBstickright, XinputtoMKBstickleft, XinputtoMKBstickup, XinputtoMKBstickdown, XinputtoMKBoption, XinputtoMKBstart, XinputtoMKBsens, XinputtoMKBsensmult, XinputtoMKBDeadzone);
+                }
+            });
         }
         public void SetXinputtoMKBCFG(uint instanceHandle, bool stickinvert, bool scanoption, bool shoulderswap, bool astatic, bool aclick, bool amove, bool bstatic, bool bclick, bool bmove, bool xstatic, bool xclick, bool xmove, bool ystatic, bool yclick, bool ymove)
         {
-            if (IntPtr.Size == 4)
+            CallOptional("SetXinputtoMKBCFG", false, () =>
             {
-                ProtoInput32.SetXinputtoMKBCFG(instanceHandle, stickinvert, scanoption, shoulderswap, astatic, aclick, amove, bstatic, bclick, bmove, xstatic, xclick, xmove, ystatic, yclick, ymove);
-            }
-            else
-            {
-                ProtoInput64.SetXinputtoMKBCFG(instanceHandle, stickinvert, scanoption, shoulderswap, astatic, aclick, amove, bstatic, bclick, bmove, xstatic, xclick, xmove, ystatic, yclick, ymove);
-            }
+                if (IntPtr.Size == 4)
+                {
+                    ProtoInput32.SetXinputtoMKBCFG(instanceHandle, stickinvert, scanoption, shoulderswap, astatic, aclick, amove, bstatic, bclick, bmove, xstatic, xclick, xmove, ystatic, yclick, ymove);
+                }
+                else
+                {
+                    ProtoInput64.SetXinputtoMKBCFG(instanceHandle, stickinvert, scanoption, shoulderswap, astatic, aclick, amove, bstatic, bclick, bmove, xstatic, xclick, xmove, ystatic, yclick, ymove);
+                }
+            });
         }
 
     };
