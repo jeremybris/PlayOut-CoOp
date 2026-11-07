@@ -11,7 +11,7 @@ namespace Nucleus.Coop.Forms
         private System.Windows.Forms.Timer hideTimer = new System.Windows.Forms.Timer();
         private bool IsVisible;
 
-        private readonly string savePath = Path.Combine(Application.StartupPath, $@"gui\shortcuts");
+        private readonly string savePath = Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $@"gui\shortcuts");
 
         public ShortcutsReminder(Rectangle destBounds)
         {

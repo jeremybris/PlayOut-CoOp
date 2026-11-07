@@ -16,9 +16,11 @@ using System.Text;
 using System.Windows.Forms;
 
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Coop
 {
-    public class GameProfile
+    public partial class GameProfile // PlayOut Co-Op: partial, see Headless/GameProfile.Headless.cs
     {
         private List<UserScreen> screens;
         public List<UserScreen> Screens => screens;
@@ -684,7 +686,7 @@ namespace Nucleus.Gaming.Coop
 
                 GetGhostBounds();
 
-                Globals.MainOSD.Show(1000, Title != "" ? $"Handler Profile \"{Title}\" Loaded" : $"Handler Profile N°{_profileToLoad} Loaded");
+                EngineUI.Osd(1000, Title != "" ? $"Handler Profile \"{Title}\" Loaded" : $"Handler Profile N°{_profileToLoad} Loaded");
 
                 return true;
 
@@ -938,7 +940,7 @@ namespace Nucleus.Gaming.Coop
 
             Updating = true;
 
-            Globals.MainOSD.Show(1500, Title != "" ? $"Handler Profile \"{Title}\" Updated" : $"Handler Profile N°{profileToSave} Updated");
+            EngineUI.Osd(1500, Title != "" ? $"Handler Profile \"{Title}\" Updated" : $"Handler Profile N°{profileToSave} Updated");
         }
 
         public static void SaveGameProfile(GameProfile profile)
@@ -949,7 +951,7 @@ namespace Nucleus.Gaming.Coop
             if (profileDisabled || GameInfo.Game.MetaInfo.DisableProfiles || !GameInfo.Game.MetaInfo.SaveProfile)
             {
                 saved = true;
-                Globals.MainOSD.Show(1600, $"Setup Finished");
+                EngineUI.Osd(1600, $"Setup Finished");
                 return;
             }
 
@@ -1192,7 +1194,7 @@ namespace Nucleus.Gaming.Coop
 
             LogManager.Log("Handler Profile Saved");
 
-            Globals.MainOSD.Show(1600, $"Handler Profile Saved. Setup Finished");
+            EngineUI.Osd(1600, $"Handler Profile Saved. Setup Finished");
         }
 
         public static void FindProfilePlayers(PlayerInfo player)
@@ -1252,7 +1254,7 @@ namespace Nucleus.Gaming.Coop
                 if (ProfilePlayersList.Any(pp => pp.ScreenIndex != profilePlayer.ScreenIndex) && scr.Item2 != profilePlayer.ScreenIndex)
                 {
                     Instance.Reset();
-                    Globals.MainOSD.Show(2000, $"Not Enough Active Screens");
+                    EngineUI.Osd(2000, $"Not Enough Active Screens");
                     scr.Item1.Type = UserScreenType.FullScreen;
                     return;
                 }

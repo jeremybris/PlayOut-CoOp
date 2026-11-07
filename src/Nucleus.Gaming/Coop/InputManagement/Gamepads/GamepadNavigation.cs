@@ -6,6 +6,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Coop.InputManagement.Gamepads
 {
     public static class GamepadNavigation
@@ -179,13 +181,13 @@ namespace Nucleus.Gaming.Coop.InputManagement.Gamepads
                         if (EnabledRuntime && (pressed == LockUIControl))
                         {
                             EnabledRuntime = false;
-                            Globals.MainOSD.Show(1600, $"UI Control Locked");
+                            EngineUI.Osd(1600, $"UI Control Locked");
                             Thread.Sleep(500);
                         }
                         else if (!EnabledRuntime && (pressed == LockUIControl))
                         {
                             EnabledRuntime = true;
-                            Globals.MainOSD.Show(1600, $"UI Control Unlocked");
+                            EngineUI.Osd(1600, $"UI Control Unlocked");
                             Thread.Sleep(500);
                         }
                     }
@@ -309,7 +311,7 @@ namespace Nucleus.Gaming.Coop.InputManagement.Gamepads
 
         private static void ToggleOsk()
         {
-            Globals.MainOSD.Show(1600, $"On Screen Keyboard");
+            EngineUI.Osd(1600, $"On Screen Keyboard");
             OnScreenKeyboard.Show();
         }
 

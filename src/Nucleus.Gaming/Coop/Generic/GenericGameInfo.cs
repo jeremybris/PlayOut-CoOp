@@ -344,6 +344,9 @@ namespace Nucleus.Gaming
         public Type HandlerType => typeof(GenericGameHandler);
         public GameMetaInfo MetaInfo = new GameMetaInfo();
 
+        /// <summary>PlayOut Co-Op: the script error message when the handler failed to execute (GUID is then null).</summary>
+        public string LoadError;
+
         public GenericGameInfo(string fileName, string folderPath, Stream str, bool[] checkUpdate)//checkUpdate [0]=initial update check [1]=update was available before reloading the handler  
         {
             JsFileName = fileName;
@@ -384,6 +387,8 @@ namespace Nucleus.Gaming
             }
             catch (Exception ex)
             {
+                LoadError = ex.Message; // PlayOut Co-Op: let headless callers report why the handler failed
+
                 System.Threading.Tasks.Task.Run(() =>
                 {
                     string[] lineSplit = ex.Message.Split(':');

@@ -53,6 +53,8 @@ using System.Windows.Forms;
 using WindowScrape.Constants;
 using static Nucleus.Gaming.GameDpiAwareness;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming
 {
     public class GenericGameHandler : IGameHandler, ILogNode
@@ -183,7 +185,7 @@ namespace Nucleus.Gaming
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message + " " + ex.StackTrace);
+                EngineUI.MessageBox(ex.Message + " " + ex.StackTrace);
             }
 
             if (gen.LockMouse)
@@ -236,15 +238,24 @@ namespace Nucleus.Gaming
             return true;
         }
 
+        /// <summary>
+        /// PlayOut Co-Op: raised on the play thread when Play() has returned (argument: Play's result, empty on success)
+        /// or thrown (argument: the error message). Instances may still be setting up their windows afterwards.
+        /// </summary>
+        public event Action<string> PlayFinished;
+
         private void StartPlay(object handler)
         {
             try
             {
                 error = ((IGameHandler)handler).Play();
+                PlayFinished?.Invoke(error);
             }
             catch (Exception ex)
             {
                 error = ex.Message;
+                EngineUI.Log("ERROR", ex.ToString()); // PlayOut Co-Op
+                PlayFinished?.Invoke(error);
                 TaskbarState.Show.Invoke();
 
                 try
@@ -265,7 +276,7 @@ namespace Nucleus.Gaming
         {
             if (!App_Misc.IgnoreInputLockReminder)
             {
-                MessageBox.Show("Some handlers will require you to press the End key to lock input. Remember to unlock input by pressing End again when you finish playing. You can disable this message in the Settings. ", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly, false);
+                EngineUI.MessageBox("Some handlers will require you to press the End key to lock input. Remember to unlock input by pressing End again when you finish playing. You can disable this message in the Settings. ", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly, false);
             }
 
             if (GameProfile.Stop_UINav) { GamepadNavigation.StopUINavigation(); }
@@ -444,6 +455,7 @@ namespace Nucleus.Gaming
 
                 IsRunning = true;
                 Log($"********** Setting up player {i + 1} **********" + "\n");
+                EngineUI.Progress("instance", i, players.Count); // PlayOut Co-Op
 
                 PlayerInfo player = players[i];
 
@@ -786,14 +798,12 @@ namespace Nucleus.Gaming
                         {
                             exeName = gen.LauncherExe.Split('|')[0];
                             Log($"User needs to select launcher exe ({exeName})");
-                            Forms.Prompt prompt = new Forms.Prompt($"Press OK after selecting the game launcher executable ({exeName}), and you're ready to continue.", true, exeName);
-                            prompt.ShowDialog();
+                            EngineUI.SelectFile($"Press OK after selecting the game launcher executable ({exeName}), and you're ready to continue.", exeName);
                         }
                         else
                         {
                             Log($"User needs to select launcher exe");
-                            Forms.Prompt prompt = new Forms.Prompt("Press OK after selecting the game launcher executable, and you're ready to continue.", true, exeName);
-                            prompt.ShowDialog();
+                            EngineUI.SelectFile("Press OK after selecting the game launcher executable, and you're ready to continue.", exeName);
                         }
 
                         Thread.Sleep(1000);
@@ -1609,7 +1619,7 @@ namespace Nucleus.Gaming
                 }
                 else
                 {
-                    Globals.MainOSD.Show(1200, $"Starting {gen.GameName} instance for {player.Nickname} as Player #{player.PlayerID + 1}");
+                    EngineUI.Osd(1200, $"Starting {gen.GameName} instance for {player.Nickname} as Player #{player.PlayerID + 1}");
                 }
 
                 if (context.NeedsSteamEmulation)
@@ -2150,8 +2160,7 @@ namespace Nucleus.Gaming
 
                         if (!gen.IgnoreThirdPartyPrompt)
                         {
-                            Forms.Prompt prompt = new Forms.Prompt("Press OK when game has launched.");
-                            prompt.ShowDialog();
+                            EngineUI.Prompt("Press OK when game has launched.");
                         }
                     }
 
@@ -2213,8 +2222,7 @@ namespace Nucleus.Gaming
                         if (gen.PromptProcessChangesAtEnd)
                         {
                             Log("Prompted user before processing end changes");
-                            Forms.Prompt prompt = new Forms.Prompt("Press OK when ready to make changes to game processes.");
-                            prompt.ShowDialog();
+                            EngineUI.Prompt("Press OK when ready to make changes to game processes.");
                         }
 
                         ProcessChangeAtEnd();
@@ -2226,8 +2234,7 @@ namespace Nucleus.Gaming
                         if (gen.PromptAfterFirstInstance && i == 0)
                         {
                             Log("Prompted user after first instance");
-                            Forms.Prompt prompt = new Forms.Prompt("Press OK when ready to launch the rest of the instances.");
-                            prompt.ShowDialog();
+                            EngineUI.Prompt("Press OK when ready to launch the rest of the instances.");
                         }
 
                         if (gen.PromptBetweenInstances)
@@ -2238,8 +2245,7 @@ namespace Nucleus.Gaming
                                 Thread.Sleep(TimeSpan.FromSeconds(gen.PauseBetweenStarts));
                             }
                             Log(string.Format("Prompted user for Instance {0}", (i + 2)));
-                            Forms.Prompt prompt = new Forms.Prompt("Press OK when ready to launch instance " + (i + 2) + ".");
-                            prompt.ShowDialog();
+                            EngineUI.Prompt("Press OK when ready to launch instance " + (i + 2) + ".");
                         }
                         else
                         {
@@ -2261,8 +2267,7 @@ namespace Nucleus.Gaming
                 {
                     Log("Prompted user before searching for game process");
 
-                    Forms.Prompt prompt = new Forms.Prompt("Press OK when ready for Nucleus to search for game process.");
-                    prompt.ShowDialog();
+                    EngineUI.Prompt("Press OK when ready for Nucleus to search for game process.");
                 }
 
                 if (gen.PauseBetweenProcessGrab > 0)
@@ -2614,7 +2619,7 @@ namespace Nucleus.Gaming
                     else
                     {
                         Log(string.Format("ERROR - IdInWindowTitle could not find main window handle for {0} (pid {1})", proc.ProcessName, proc.Id));
-                        MessageBox.Show(string.Format("IdInWindowTitle: Could not find main window handle for {0} (pid:{1})", proc.ProcessName, proc.Id), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        EngineUI.MessageBox(string.Format("IdInWindowTitle: Could not find main window handle for {0} (pid:{1})", proc.ProcessName, proc.Id), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
 
@@ -2648,8 +2653,7 @@ namespace Nucleus.Gaming
                     if (i == 0)
                     {
                         Log(string.Format("Prompted user after first instance", (i + 2)));
-                        Prompt prompt = new Prompt("Press OK when ready to launch the rest of the instances.");
-                        prompt.ShowDialog();
+                        EngineUI.Prompt("Press OK when ready to launch the rest of the instances.");
                     }
                 }
 
@@ -2663,8 +2667,7 @@ namespace Nucleus.Gaming
 
                     Log(string.Format("Prompted user for Instance {0}", (i + 2)));
 
-                    Prompt prompt = new Prompt("Press OK when ready to launch instance " + (i + 2) + ".");
-                    prompt.ShowDialog();
+                    EngineUI.Prompt("Press OK when ready to launch instance " + (i + 2) + ".");
                 }
                 else if (gen.PromptBetweenInstances && i == players.Count - 1 && (gen.HookFocus || gen.FakeFocus || gen.SetWindowHook || gen.HideCursor || gen.PreventWindowDeactivation || gen.SetTopMostAtEnd))
                 {
@@ -2676,8 +2679,7 @@ namespace Nucleus.Gaming
 
                     Log("Prompted user to install post hooks");
 
-                    Prompt prompt = new Prompt("Press OK when ready to install hooks and/or start sending fake messages.");
-                    prompt.ShowDialog();
+                    EngineUI.Prompt("Press OK when ready to install hooks and/or start sending fake messages.");
 
                     foreach (Process aproc in attached)
                     {
@@ -2879,7 +2881,7 @@ namespace Nucleus.Gaming
                             else
                             {
                                 Log(string.Format("ERROR - ChangeWindowTitle could not find main window handle for {0} (pid:{1})", aproc.ProcessName, aproc.Id));
-                                MessageBox.Show(string.Format("ChangeWindowTitle: Could not find main window handle for {0} (pid:{1})", aproc.ProcessName, aproc.Id), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                EngineUI.MessageBox(string.Format("ChangeWindowTitle: Could not find main window handle for {0} (pid:{1})", aproc.ProcessName, aproc.Id), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             }
                         }
                     }                 
@@ -3008,7 +3010,7 @@ namespace Nucleus.Gaming
 
                 LockInputRuntime.Lock(gen.LockInputSuspendsExplorer, gen.ProtoInput.FreezeExternalInputWhenInputNotLocked, gen?.ProtoInput);
 
-                Globals.MainOSD.Show(1600, "Inputs Locked");
+                EngineUI.Osd(1600, "Inputs Locked");
             }
 
             // Call the input lock/unlock callbacks, just in case they haven't been called with the players fully setup
@@ -3109,8 +3111,7 @@ namespace Nucleus.Gaming
                 {
                     Log(string.Format("Prompted user for Instance {0}", (i + 1)));
 
-                    Prompt prompt = new Prompt("Press OK when game instance " + (i + 1) + " has been launched and/or you wish to continue.");
-                    prompt.ShowDialog();
+                    EngineUI.Prompt("Press OK when game instance " + (i + 1) + " has been launched and/or you wish to continue.");
                 }
                 else
                 {
@@ -3612,6 +3613,8 @@ namespace Nucleus.Gaming
 
         public void Log(string logMessage)
         {
+            EngineUI.Log("HANDLER", logMessage); // PlayOut Co-Op: also forward to the host
+
             try
             {
                 if (App_Misc.DebugLog)

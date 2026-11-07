@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Tools.UserDriveInfo
 {
     public static class UserDriveInfo
@@ -26,19 +28,19 @@ namespace Nucleus.Gaming.Tools.UserDriveInfo
                         {
                             if (startupCheck)
                             {
-                                MessageBox.Show("\"exFat\" is not a supported drive format.\n\n" +
+                                EngineUI.MessageBox("\"exFat\" is not a supported drive format.\n\n" +
                                    "Move your Nucleus install folder to a NTFS formated drive, or format the drive to NTFS format.\n\n" +
                                    "Reasons:\n\n" +
                                    "exFat does not support symlink functions.", "Incompatible drive format!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             }
                             else
                             {
-                                MessageBox.Show("\"exFat\" is not a supported drive format.\n\n" +
+                                EngineUI.MessageBox("\"exFat\" is not a supported drive format.\n\n" +
                                     "Move your game(s) to a NTFS formated drive, or format the drive to NTFS format.\n\n" +
                                     "Reasons:\n\n" +
                                     "exFat does not support symlink functions.", "Incompatible drive format!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
-                                MessageBox.Show("The game has not been added to your Nucleus game collection.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                EngineUI.MessageBox("The game has not been added to your Nucleus game collection.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
 
                             return true;
@@ -51,7 +53,7 @@ namespace Nucleus.Gaming.Tools.UserDriveInfo
             catch (Exception ex)
             {
                 string message = "Error: " + ex.Message;
-                MessageBox.Show(message + "Something went wrong during drives compatibility check!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox(message + "Something went wrong during drives compatibility check!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
         }

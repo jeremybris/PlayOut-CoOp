@@ -45,6 +45,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <!-- PlayOut Co-Op: Nucleus's default Settings.ini (NucleusCoopTool/copyoutput), written to a new engine root. -->
+    <EmbeddedResource Include="Headless\DefaultSettings.ini" LogicalName="Nucleus.Gaming.Headless.DefaultSettings.ini" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\WindowScrape\WindowScrape.csproj" />
   </ItemGroup>
 </Project>

@@ -16,6 +16,8 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Tools.Steam
 {
     public static class SteamFunctions
@@ -383,7 +385,7 @@ namespace Nucleus.Gaming.Tools.Steam
 
                                     if (i == 0)
                                     {
-                                        MessageBox.Show("Goldberg was unable to locate steam_interfaces.txt or create one. Process will continue without using this file.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        EngineUI.MessageBox("Goldberg was unable to locate steam_interfaces.txt or create one. Process will continue without using this file.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                     }
                                 }
                             }
@@ -737,7 +739,7 @@ namespace Nucleus.Gaming.Tools.Steam
 
                                 if (i == 0)
                                 {
-                                    MessageBox.Show("Goldberg was unable to locate steam_interfaces.txt or create one. Process will continue without using this file.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    EngineUI.MessageBox("Goldberg was unable to locate steam_interfaces.txt or create one. Process will continue without using this file.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 }
                             }
                         }
@@ -840,8 +842,7 @@ namespace Nucleus.Gaming.Tools.Steam
         {
             var handlerInstance = GenericGameHandler.Instance;
 
-            Forms.Prompt prompt = new Forms.Prompt("Goldberg Lobby Connect: Press OK after you are hosting a game.");
-            prompt.ShowDialog();
+            EngineUI.Prompt("Goldberg Lobby Connect: Press OK after you are hosting a game.");
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = Path.Combine(Globals.NucleusInstallRoot, "utils\\GoldbergEmu\\lobby_connect\\lobby_connect.exe");
@@ -868,7 +869,7 @@ namespace Nucleus.Gaming.Tools.Steam
                 p.Kill();
             }
             catch (Exception ex)
-            { MessageBox.Show(ex.Message); }
+            { EngineUI.MessageBox(ex.Message); }
 
             if (!string.IsNullOrEmpty(lobbyConnectArg))
             {
@@ -877,7 +878,7 @@ namespace Nucleus.Gaming.Tools.Steam
             else
             {
                 handlerInstance.Log("Goldberg Lobby Connect: Could not find lobby ID");
-                MessageBox.Show("Goldberg Lobby Connect: Could not find lobby ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox("Goldberg Lobby Connect: Could not find lobby ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1185,7 +1186,7 @@ namespace Nucleus.Gaming.Tools.Steam
         {
             try
             {
-                string steamlessExePath = Path.Combine($@"{Directory.GetCurrentDirectory()}\utils\Steamless\Steamless.CLI.exe");
+                string steamlessExePath = Path.Combine($@"{Globals.NucleusInstallRoot}\utils\Steamless\Steamless.CLI.exe");
                 string steamlessArgs = $@"{args} {linkBinFolder}\{executableName}";
                 var batch = Path.Combine(linkBinFolder, "steamless.bat");
                 string content = $"{steamlessExePath} {steamlessArgs} \"{executableName}\"";
@@ -1239,7 +1240,7 @@ namespace Nucleus.Gaming.Tools.Steam
         {
             try
             {
-                string steamlessExePath = Path.Combine($@"{Directory.GetCurrentDirectory()}\utils\Steamless\Steamless.CLI.exe");
+                string steamlessExePath = Path.Combine($@"{Globals.NucleusInstallRoot}\utils\Steamless\Steamless.CLI.exe");
 
                 string steamlessArgs = $@"{args} {linkBinFolder}\{executableName}";
 

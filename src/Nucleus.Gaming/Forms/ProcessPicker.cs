@@ -1,5 +1,8 @@
 ﻿using Nucleus.Gaming.Tools.GlobalWindowMethods;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nucleus.Gaming.Headless;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -44,6 +47,60 @@ namespace Nucleus.Gaming.Coop.Generic
         public static Process LaunchProcessPick(PlayerInfo player)
         {
             var handlerInstance = GenericGameHandler.Instance;
+
+            // PlayOut Co-Op: headless engines ask EngineUI instead of showing the picker form. Candidates are
+            // listed in the same order the form uses (name matches first) without the already attached ones.
+            if (EngineUI.Headless)
+            {
+                handlerInstance.Log("Launching process picker (headless)");
+                string exeNameNoExt = Path.GetFileNameWithoutExtension(handlerInstance.CurrentGameInfo.ExecutableName ?? "").ToLower();
+                string launcherNoExt = handlerInstance.CurrentGameInfo.LauncherExe?.Length > 0 ? Path.GetFileNameWithoutExtension(handlerInstance.CurrentGameInfo.LauncherExe).ToLower() : null;
+                List<Process> matches = new List<Process>();
+                List<Process> others = new List<Process>();
+
+                foreach (Process p in Process.GetProcesses())
+                {
+                    try
+                    {
+                        if (p.Id == 0 || string.IsNullOrEmpty(p.MainWindowTitle) || handlerInstance.attachedIds.Contains(p.Id))
+                        {
+                            continue;
+                        }
+
+                        string pname = p.ProcessName.ToLower();
+                        if ((exeNameNoExt.Length > 0 && pname.Contains(exeNameNoExt)) || (launcherNoExt != null && pname.Contains(launcherNoExt)))
+                        {
+                            matches.Add(p);
+                        }
+                        else
+                        {
+                            others.Add(p);
+                        }
+                    }
+                    catch { }
+                }
+
+                Process picked = EngineUI.PickProcess(matches.Concat(others).ToList(), player,
+                    $"Nucleus could not find the game process for {player.Nickname}. Select it.");
+
+                if (picked == null)
+                {
+                    handlerInstance.Log("Process picker: no process selected");
+                    return null;
+                }
+
+                handlerInstance.Log(string.Format("Obtained process {0} (pid {1}) via process picker", picked.ProcessName, picked.Id));
+                handlerInstance.attached.Add(picked);
+                handlerInstance.attachedIds.Add(picked.Id);
+                player.ProcessID = picked.Id;
+
+                if (player.IsKeyboardPlayer && !player.IsRawKeyboard)
+                {
+                    handlerInstance.keyboardProcId = picked.Id;
+                }
+
+                return picked;
+            }
 
             ProcessPicker ppform = new ProcessPicker();
             handlerInstance.Log("Launching process picker");

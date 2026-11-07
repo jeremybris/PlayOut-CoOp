@@ -1,6 +1,8 @@
 ﻿using Nucleus.Gaming.Coop;
 using System.IO;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Forms
 {
     public static class CustomPromptRuntime
@@ -87,8 +89,16 @@ namespace Nucleus.Gaming.Forms
                     {
                         prevAnswer = customValue[d];
                     }
-                    Forms.CustomPrompt prompt = new Forms.CustomPrompt(handlerInstance.CurrentGameInfo.CustomUserGeneralPrompts[d], prevAnswer, d);
-                    prompt.ShowDialog();
+                    if (EngineUI.Headless)
+                    {
+                        string headlessValue = EngineUI.CustomPrompt("General", handlerInstance.CurrentGameInfo.CustomUserGeneralPrompts[d], prevAnswer, d, player);
+                        if (headlessValue != null) { customValue[d] = headlessValue; }
+                    }
+                    else
+                    {
+                        Forms.CustomPrompt prompt = new Forms.CustomPrompt(handlerInstance.CurrentGameInfo.CustomUserGeneralPrompts[d], prevAnswer, d);
+                        prompt.ShowDialog();
+                    }
                     if (customValue[d]?.Length > 0)
                     {
                         handlerInstance.Context.CustomUserGeneralValues[d] = customValue[d];
@@ -188,8 +198,16 @@ namespace Nucleus.Gaming.Forms
                     {
                         prevAnswer = customValue[d];
                     }
-                    Forms.CustomPrompt prompt = new Forms.CustomPrompt(handlerInstance.CurrentGameInfo.CustomUserPlayerPrompts[d], prevAnswer, d);
-                    prompt.ShowDialog();
+                    if (EngineUI.Headless)
+                    {
+                        string headlessValue = EngineUI.CustomPrompt("Player", handlerInstance.CurrentGameInfo.CustomUserPlayerPrompts[d], prevAnswer, d, player);
+                        if (headlessValue != null) { customValue[d] = headlessValue; }
+                    }
+                    else
+                    {
+                        Forms.CustomPrompt prompt = new Forms.CustomPrompt(handlerInstance.CurrentGameInfo.CustomUserPlayerPrompts[d], prevAnswer, d);
+                        prompt.ShowDialog();
+                    }
                     handlerInstance.Context.CustomUserPlayerValues[d] = customValue[d];
                     handlerInstance.Log("User entered: " + customValue[d]);
                 }
@@ -272,8 +290,16 @@ namespace Nucleus.Gaming.Forms
                     {
                         prevAnswer = customValue[d];
                     }
-                    Forms.CustomPrompt prompt = new Forms.CustomPrompt(handlerInstance.CurrentGameInfo.CustomUserInstancePrompts[d], prevAnswer, d);
-                    prompt.ShowDialog();
+                    if (EngineUI.Headless)
+                    {
+                        string headlessValue = EngineUI.CustomPrompt("Instance", handlerInstance.CurrentGameInfo.CustomUserInstancePrompts[d], prevAnswer, d, player);
+                        if (headlessValue != null) { customValue[d] = headlessValue; }
+                    }
+                    else
+                    {
+                        Forms.CustomPrompt prompt = new Forms.CustomPrompt(handlerInstance.CurrentGameInfo.CustomUserInstancePrompts[d], prevAnswer, d);
+                        prompt.ShowDialog();
+                    }
                     handlerInstance.Context.CustomUserInstanceValues[d] = customValue[d];
                     handlerInstance.Log("User entered: " + customValue[d]);
                 }

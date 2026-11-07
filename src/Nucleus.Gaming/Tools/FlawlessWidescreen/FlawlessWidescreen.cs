@@ -7,6 +7,8 @@ using System.Reflection;
 using System.Windows.Forms;
 using System.Xml;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Tools.FlawlessWidescreen
 {
     public static class FlawlessWidescreen
@@ -61,7 +63,7 @@ namespace Nucleus.Gaming.Tools.FlawlessWidescreen
 
             if (!Directory.Exists(fwGameFolder))
             {
-                MessageBox.Show("Nucleus could not find an installed plugin for \"" + handlerInstance.CurrentGameInfo.FlawlessWidescreen + "\" in FlawlessWidescreen. FlawlessWidescreen will now open. Please make sure to install the plugin and make any required changes. When yo close FlawlessWidescreen, Nucleus will continue. Press OK to open FlawlessWidescreen", "Nucleus - Use Flawless Widescreen", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                EngineUI.MessageBox("Nucleus could not find an installed plugin for \"" + handlerInstance.CurrentGameInfo.FlawlessWidescreen + "\" in FlawlessWidescreen. FlawlessWidescreen will now open. Please make sure to install the plugin and make any required changes. When yo close FlawlessWidescreen, Nucleus will continue. Press OK to open FlawlessWidescreen", "Nucleus - Use Flawless Widescreen", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 //bool appRunning = false;
                 Process[] runnProcs = Process.GetProcesses();

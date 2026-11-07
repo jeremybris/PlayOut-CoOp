@@ -21,6 +21,8 @@ using System.Windows.Forms;
 using System.Xml;
 
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming
 {
     // This class is a holder for the GenericGameInfo class. It doesn't implement the IGenericGameInfo
@@ -467,7 +469,7 @@ namespace Nucleus.Gaming
             }
             else
             {
-                System.Windows.Forms.MessageBox.Show("Zip file doesn't exist,is corrupted or in an unsupported format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox("Zip file doesn't exist,is corrupted or in an unsupported format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return true;
@@ -494,7 +496,7 @@ namespace Nucleus.Gaming
             }
             else
             {
-                System.Windows.Forms.MessageBox.Show("Zip file doesn't exist,is corrupted or in an unsupported format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox("Zip file doesn't exist,is corrupted or in an unsupported format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return true;
@@ -769,13 +771,11 @@ namespace Nucleus.Gaming
                 {
                     if (fileIndex < (filePaths.Length - 1))
                     {
-                        Forms.Prompt prompt = new Forms.Prompt("Press OK when ready to launch " + filePaths[fileIndex]);
-                        prompt.ShowDialog();
+                        EngineUI.Prompt("Press OK when ready to launch " + filePaths[fileIndex]);
                     }
                     else
                     {
-                        Forms.Prompt prompt = new Forms.Prompt("Press OK when ready to proceed with launching the game instance " + filePaths[fileIndex]);
-                        prompt.ShowDialog();
+                        EngineUI.Prompt("Press OK when ready to proceed with launching the game instance " + filePaths[fileIndex]);
                     }
 
                     if (fileIndex < (filePaths.Length - 1) && secondsToPauseInbetween > 0)
@@ -843,26 +843,22 @@ namespace Nucleus.Gaming
                         {
                             if (showFilePath)
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText + " File path: " + filePaths[fileIndex]);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText + " File path: " + filePaths[fileIndex]);
                             }
                             else
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText);
                             }
                         }
                         else
                         {
                             if (showFilePath)
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText + filePaths[fileIndex]);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText + filePaths[fileIndex]);
                             }
                             else
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText);
                             }
                         }
 
@@ -880,8 +876,7 @@ namespace Nucleus.Gaming
                         {
                             if (showFilePath)
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText + " File path: " + filePaths[fileIndex]);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText + " File path: " + filePaths[fileIndex]);
 
                                 ProcessStartInfo psi = new ProcessStartInfo
                                 {
@@ -908,8 +903,7 @@ namespace Nucleus.Gaming
                             }
                             else
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText);
 
                                 ProcessStartInfo psi = new ProcessStartInfo
                                 {
@@ -939,8 +933,7 @@ namespace Nucleus.Gaming
                         {
                             if (showFilePath)
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText + " File path: " + filePaths[fileIndex]);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText + " File path: " + filePaths[fileIndex]);
 
                                 ProcessStartInfo psi = new ProcessStartInfo
                                 {
@@ -967,8 +960,7 @@ namespace Nucleus.Gaming
                             }
                             else
                             {
-                                Forms.Prompt prompt = new Forms.Prompt(customText);
-                                prompt.ShowDialog();
+                                EngineUI.Prompt(customText);
 
                                 ProcessStartInfo psi = new ProcessStartInfo
                                 {
@@ -2115,7 +2107,7 @@ namespace Nucleus.Gaming
             string fullKeyPath = baseKey + "\\" + sKey;
             if (!regKeyPaths.Contains(fullKeyPath) && key != null)
             {
-                string regPath = Directory.GetCurrentDirectory() + "\\utils\\backup\\" + sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg";
+                string regPath = Globals.NucleusInstallRoot + "\\utils\\backup\\" + sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg";
                 if (!File.Exists(regPath))
                 {
                     Log(string.Format("{0} not found in backups, exporting registry now", sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg"));
@@ -2152,7 +2144,7 @@ namespace Nucleus.Gaming
             string fullKeyPath = baseKey + "\\" + sKey;
             if (!regKeyPaths.Contains(fullKeyPath) && key != null)
             {
-                string regPath = Directory.GetCurrentDirectory() + "\\utils\\backup\\" + sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg";
+                string regPath = Globals.NucleusInstallRoot + "\\utils\\backup\\" + sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg";
                 if (!File.Exists(regPath))
                 {
                     Log(string.Format("{0} not found in backups, exporting registry now", sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg"));
@@ -2238,7 +2230,7 @@ namespace Nucleus.Gaming
 
             if (!regKeyPaths.Contains(fullKeyPath) && key != null)
             {
-                string regPath = Directory.GetCurrentDirectory() + "\\utils\\backup\\" + sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg";
+                string regPath = Globals.NucleusInstallRoot + "\\utils\\backup\\" + sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg";
                 if (!File.Exists(regPath))
                 {
                     Log(string.Format("{0} not found in backups, exporting registry now", sKey.Substring(sKey.LastIndexOf('\\') + 1) + ".reg"));

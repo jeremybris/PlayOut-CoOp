@@ -15,6 +15,12 @@ namespace Nucleus.Gaming.Cache
 
         public static Bitmap GetImage(string path)
         {
+            // PlayOut Co-Op: the gui theme assets are not shipped with the headless engine; missing images are null.
+            if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path))
+            {
+                return null;
+            }
+
             if (!initialized)
             {
                 FreeMemoryTimer = new System.Threading.Timer(FreeMemory_Tick, null, 0, 180000);

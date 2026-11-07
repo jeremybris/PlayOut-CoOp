@@ -12,6 +12,8 @@ using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming
 {
     /// <summary>
@@ -49,7 +51,15 @@ namespace Nucleus.Gaming
             set => user = value;
         }
 
-        public GameManager()
+        public GameManager() : this(true)
+        {
+        }
+
+        /// <summary>
+        /// PlayOut Co-Op: <paramref name="scanHandlers"/> false skips loading every handlers\*.js at startup
+        /// (headless hosts load the one handler they need with <see cref="LoadHandlerFile"/>).
+        /// </summary>
+        public GameManager(bool scanHandlers)
         {
             Instance = this;
             games = new Dictionary<string, GenericGameInfo>();
@@ -75,8 +85,39 @@ namespace Nucleus.Gaming
 
             RawInputManager.RegisterRawInput(rawInputProcessor);
 
-            Initialize();
+            if (scanHandlers)
+            {
+                Initialize();
+            }
+
             LoadUser();
+        }
+
+        /// <summary>
+        /// PlayOut Co-Op: loads one handler script exactly like <see cref="Initialize"/> does for each handlers\*.js and
+        /// registers it by GUID. The file should live in handlers\ (Nucleus resolves JsFileName against that folder).
+        /// Returns the GenericGameInfo; when the script fails, GUID is null and LoadError holds the message.
+        /// </summary>
+        public GenericGameInfo LoadHandlerFile(string jsPath)
+        {
+            FileInfo f = new FileInfo(jsPath);
+
+            using (Stream str = f.OpenRead())
+            {
+                string ext = Path.GetFileNameWithoutExtension(f.Name);
+                string pathBlock = Path.Combine(f.Directory.FullName, ext);
+
+                GenericGameInfo info = new GenericGameInfo(f.Name, pathBlock, str, new bool[] { false, false });
+
+                if (info.GUID == null)
+                {
+                    return info;
+                }
+
+                games[info.GUID] = info;
+                gameInfos[info.GUID] = info;
+                return info;
+            }
         }
 
         /// <summary>
@@ -728,7 +769,7 @@ namespace Nucleus.Gaming
                 }
                 catch (ArgumentException ex)
                 {
-                    MessageBox.Show(ex.InnerException + ": " + ex.Message, "Error with handler " + f.Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EngineUI.MessageBox(ex.InnerException + ": " + ex.Message, "Error with handler " + f.Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     continue;
                 }
             }          
@@ -740,19 +781,19 @@ namespace Nucleus.Gaming
             {
                 if (gameGuid != null)
                 {
-                    if (File.Exists(Path.Combine(Application.StartupPath, $"gui\\covers\\{gameGuid}.jpeg")))
+                    if (File.Exists(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\covers\\{gameGuid}.jpeg")))
                     {
-                        File.Delete(Path.Combine(Application.StartupPath, $"gui\\covers\\{gameGuid}.jpeg"));
+                        File.Delete(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\covers\\{gameGuid}.jpeg"));
                     }
 
-                    if (Directory.Exists(Path.Combine(Application.StartupPath, $"gui\\screenshots\\{gameGuid}")))
+                    if (Directory.Exists(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\screenshots\\{gameGuid}")))
                     {
-                        Directory.Delete(Path.Combine(Application.StartupPath, $"gui\\screenshots\\{gameGuid}"), true);
+                        Directory.Delete(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\screenshots\\{gameGuid}"), true);
                     }
 
-                    if (Directory.Exists(Path.Combine(Application.StartupPath, $"gui\\descriptions")))
+                    if (Directory.Exists(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\descriptions")))
                     {
-                        Directory.Delete(Path.Combine(Application.StartupPath, $"gui\\descriptions"), true);
+                        Directory.Delete(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\descriptions"), true);
                     }
 
                     return;
@@ -762,7 +803,7 @@ namespace Nucleus.Gaming
                 //We search for existing screenshot directories and cover file and compare with the actual user games.
                 //If dirs or files with no corresponding user game are found, we delete them.
 
-                List<string> scDirToDelete = Directory.GetDirectories(Path.Combine(Application.StartupPath, $"gui\\screenshots")).
+                List<string> scDirToDelete = Directory.GetDirectories(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\screenshots")).
                     Where(sc => user.Games.All(v => !sc.Contains(v.GameGuid))).ToList();
 
                 foreach (var scDirectory in scDirToDelete)
@@ -774,7 +815,7 @@ namespace Nucleus.Gaming
                     }
                 }
 
-                List<string> coversToDelete = Directory.GetFiles(Path.Combine(Application.StartupPath, $"gui\\covers")).
+                List<string> coversToDelete = Directory.GetFiles(Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"gui\\covers")).
                    Where(sc => user.Games.All(v => !sc.Contains(v.GameGuid))).ToList();
 
                 foreach (var coverFile in coversToDelete)
@@ -878,7 +919,7 @@ namespace Nucleus.Gaming
             }
             catch (ArgumentException ex)
             {
-                MessageBox.Show(ex.InnerException + ": " + ex.Message, "Error with handler " + f.Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox(ex.InnerException + ": " + ex.Message, "Error with handler " + f.Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 //continue;
                 return null;
             }

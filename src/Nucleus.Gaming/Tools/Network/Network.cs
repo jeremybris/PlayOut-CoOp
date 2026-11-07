@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Tools.Network
 {
     public static class Network
@@ -74,7 +76,7 @@ namespace Nucleus.Gaming.Tools.Network
                 if (iniNetworkInterface == null)
                 {
                     handlerInstance.Log("ERROR - Unable to resolve network interface");
-                    MessageBox.Show("Unable to resolve network interface", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EngineUI.MessageBox("Unable to resolve network interface", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -102,13 +104,13 @@ namespace Nucleus.Gaming.Tools.Network
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Obtaining default IP settings error. " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    EngineUI.MessageBox("Obtaining default IP settings error. " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
 
             if (networkInterfaceOverride == null)
             {
-                MessageBox.Show("WARNING: This feature is highly experimental!\n\nYour computers IP is about to be changed. You may receive a prompt immediately after to complete this action. Your IP settings will be reverted back to normal upon exiting Nucleus normally. However, if Nucleus crashes, it is not gauranteed that your settings will be set back.\n\nPress OK when ready to have your IP changed.\n\nOriginal Settings:\nNetworkInterface: " + iniNetworkInterface + "\nIP: " + currentIPaddress + "\nSubnet Mask: " + currentSubnetMask + "\nDefault Gateway: " + currentGateway + "\nDHCP: " + isDHCPenabled + "\nDynamic DNS: " + isDynamicDns + "\nDNS: " + dnsServersStr, "Nucleus - Change IP Per Instance", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                EngineUI.MessageBox("WARNING: This feature is highly experimental!\n\nYour computers IP is about to be changed. You may receive a prompt immediately after to complete this action. Your IP settings will be reverted back to normal upon exiting Nucleus normally. However, if Nucleus crashes, it is not gauranteed that your settings will be set back.\n\nPress OK when ready to have your IP changed.\n\nOriginal Settings:\nNetworkInterface: " + iniNetworkInterface + "\nIP: " + currentIPaddress + "\nSubnet Mask: " + currentSubnetMask + "\nDefault Gateway: " + currentGateway + "\nDHCP: " + isDHCPenabled + "\nDynamic DNS: " + isDynamicDns + "\nDNS: " + dnsServersStr, "Nucleus - Change IP Per Instance", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             else
             {
@@ -151,8 +153,7 @@ namespace Nucleus.Gaming.Tools.Network
 
             handlerInstance.Log("Reverting IP settings back to normal");
 
-            Forms.Prompt prompt = new Forms.Prompt("Reverting IP settings back to normal. You may receive another prompt to action it.");
-            prompt.ShowDialog();
+            EngineUI.Prompt("Reverting IP settings back to normal. You may receive another prompt to action it.");
             if (isDHCPenabled)
             {
                 SetDHCP(iniNetworkInterface);

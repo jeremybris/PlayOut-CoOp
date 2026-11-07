@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming
 {
     public enum SymbolicLink
@@ -215,7 +217,7 @@ namespace Nucleus.Gaming
                 {
                     if (!handlerInstance.CurrentGameInfo.IgnoreDeleteFilesPrompt)
                     {
-                        DialogResult dialogResult = MessageBox.Show("Are you sure you want to delete '" + fullFilePath + "'?", "Nucleus - Delete Files In Config Path", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                        DialogResult dialogResult = EngineUI.MessageBox("Are you sure you want to delete '" + fullFilePath + "'?", "Nucleus - Delete Files In Config Path", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                         if (dialogResult != DialogResult.Yes)
                         {
                             continue;

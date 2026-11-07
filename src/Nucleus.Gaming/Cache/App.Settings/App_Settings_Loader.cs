@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.App.Settings
 {
     public static class App_Settings_Loader
@@ -22,7 +24,7 @@ namespace Nucleus.Gaming.App.Settings
             }
             catch(Exception ex)
             {
-                MessageBox.Show("Nucleus is unable to load its settings.\n" +
+                EngineUI.MessageBox("Nucleus is unable to load its settings.\n" +
                                 "Do not edit settings.ini manually.\n" +
                                 "Try re-extracting Nucleus with 7-Zip.\n" +
                                 "If the issue persists ask for support on our Discord server.", "Error loading Nucleus settings!" +

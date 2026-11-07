@@ -7,6 +7,8 @@ using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming
 {
     public class LogManager
@@ -74,6 +76,7 @@ namespace Nucleus.Gaming
 
         public void PLog(string str)
         {
+            EngineUI.Log("LOG", str); // PlayOut Co-Op
             Console.WriteLine(str);
             ThreadPool.QueueUserWorkItem(doLog, str);
         }
@@ -215,7 +218,7 @@ namespace Nucleus.Gaming
             if (!App_Misc.DebugLog &&
                 App_Misc.EnableLogAnswer == "")
             {
-                DialogResult dialogResult = System.Windows.Forms.MessageBox.Show($"Click \"Yes\" if you want to enable debug logging. Start the game once again to generate a debug log.\nClick \"No\" to disable this prompt.", "Enable debug log", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                DialogResult dialogResult = EngineUI.MessageBox($"Click \"Yes\" if you want to enable debug logging. Start the game once again to generate a debug log.\nClick \"No\" to disable this prompt.", "Enable debug log", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 
                 if (dialogResult == DialogResult.Yes)
                 {

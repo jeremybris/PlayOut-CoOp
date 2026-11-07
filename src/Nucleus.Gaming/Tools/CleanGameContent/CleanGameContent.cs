@@ -8,6 +8,8 @@ using Nucleus.Gaming.Forms;
 using System.Management.Instrumentation;
 using System.Windows.Forms;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming
 {
     public static class CleanGameContent
@@ -22,7 +24,7 @@ namespace Nucleus.Gaming
             {
                 if (contentExist)
                 {
-                    DialogResult dialogResult = MessageBox.Show("Are you sure you want to delete '" + path + "' and all its contents?", "Confirm deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    DialogResult dialogResult = EngineUI.MessageBox("Are you sure you want to delete '" + path + "' and all its contents?", "Confirm deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     if (dialogResult == DialogResult.Yes)
                     {
                         CleanContentFolder(currentGameInfo,path);
@@ -30,7 +32,7 @@ namespace Nucleus.Gaming
                 }
                 else
                 {
-                    MessageBox.Show("No data in content folder to delete.");
+                    EngineUI.MessageBox("No data in content folder to delete.");
                 }
             }
             else

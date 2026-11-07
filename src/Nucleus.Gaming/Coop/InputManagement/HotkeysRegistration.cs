@@ -3,6 +3,8 @@ using System.Windows.Forms;
 using System;
 using Nucleus.Gaming.App.Settings;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Coop.InputManagement
 {
     public static class HotkeysRegistration
@@ -68,7 +70,7 @@ namespace Nucleus.Gaming.Coop.InputManagement
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error registering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox("Error registering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -89,7 +91,7 @@ namespace Nucleus.Gaming.Coop.InputManagement
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error unregistering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox("Error unregistering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -129,7 +131,7 @@ namespace Nucleus.Gaming.Coop.InputManagement
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error registering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox("Error registering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -168,7 +170,7 @@ namespace Nucleus.Gaming.Coop.InputManagement
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error registering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                EngineUI.MessageBox("Error registering hotkeys " + ex.Message, ex.ToString(), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

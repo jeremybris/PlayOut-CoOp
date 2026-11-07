@@ -12,6 +12,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+using Nucleus.Gaming.Headless;
+
 namespace Nucleus.Gaming.Coop.InputManagement
 {
     public class RawInputProcessor
@@ -431,7 +433,7 @@ namespace Nucleus.Gaming.Coop.InputManagement
 
                     if(GlobalWindowMethods.ResetingWindows)
                     {
-                        Globals.MainOSD.Show(1200, "Wait For Game Windows To Be Reseted");
+                        EngineUI.Osd(1200, "Wait For Game Windows To Be Reseted");
                         return;
                     }
 
@@ -447,7 +449,7 @@ namespace Nucleus.Gaming.Coop.InputManagement
                             GlobalWindowMethods.ChangeForegroundWindow();
                         }
 
-                        Globals.MainOSD.Show(800, "Inputs Locked");
+                        EngineUI.Osd(800, "Inputs Locked");
 
                         Thread.Sleep(850);
 
@@ -459,7 +461,7 @@ namespace Nucleus.Gaming.Coop.InputManagement
                         
                         Thread.Sleep(300);
                         
-                        Globals.MainOSD.Show(800, "Inputs Unlocked");
+                        EngineUI.Osd(800, "Inputs Unlocked");
                     }
                 }
 

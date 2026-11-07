@@ -15,8 +15,8 @@ namespace Nucleus.Gaming.Cache
 {
     public static class HubCache
     {
-        private static string cacheFile = Path.Combine(Application.StartupPath, $"webview\\cache\\hubcache");
-        private static string thumbnailFolder = Path.Combine(Application.StartupPath, $"webview\\cache\\thumbnails\\");
+        private static string cacheFile = Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"webview\\cache\\hubcache");
+        private static string thumbnailFolder = Path.Combine(Nucleus.Gaming.Globals.NucleusInstallRoot, $"webview\\cache\\thumbnails\\");
         private const string api = "https://hub.splitscreen.me/api/v1/";
 
         private static JObject cacheObject;

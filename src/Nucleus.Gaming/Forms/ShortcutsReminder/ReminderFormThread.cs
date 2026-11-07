@@ -8,6 +8,12 @@ namespace Nucleus.Gaming.Forms
     {
         public static void StartReminderForms(Rectangle destBounds)
         {
+            // PlayOut Co-Op: the shortcut reminder overlays are Nucleus UI (they need the gui theme assets); not shown headless.
+            if (Nucleus.Gaming.Headless.EngineUI.Headless)
+            {
+                return;
+            }
+
             Thread backgroundFormThread = new Thread(delegate ()
             {
                 ShortcutsReminder reminder = new ShortcutsReminder(destBounds);
