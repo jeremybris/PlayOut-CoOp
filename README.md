@@ -111,6 +111,12 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
   the released Nucleus Co-op 2.4.2 does not export (its own engine never calls them), so every ProtoInput handler failed
   with `EntryPointNotFoundException`. `ProtoInput.cs` now calls them through `CallOptional`: skipped when missing, with a
   warning logged once when the handler actually turned the feature on.
+- **Game file backups rewritten (2026-11-07):** `Tools/BackupDatas` (`Game.BackupFiles`/`BackupFolders`: saves kept per
+  player between sessions) uses plain relative paths (upstream searched paths for the nickname, so a file named after a
+  player went astray, and paired instance folders with players by sorted name); a failure skips one file, not the rest
+  or the session end; a restore never writes through a link into the game folder nor replaces an instance file newer
+  than the backup (a session that ended without cleanup); files the game deleted are removed from the backup; each
+  list is backed up once; messages go to the engine log.
 - **New program** `src/PlayOutCoop`: `PlayOutCoop.exe`, the command-line helper implementing
   [CONTRACT.md](CONTRACT.md) (`devices`, `inspect`, `play`).
 
