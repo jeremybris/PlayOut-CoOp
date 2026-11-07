@@ -1,5 +1,6 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
 // configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/CleanGameContent/CleanGameContent.cs
+// Modified again 2026-11-07: content deletion never follows links/junctions (Headless.GameLinks.DeleteTree); contentRoot path.
 using System.Collections.Generic;
 using System.Diagnostics;
 using System;
@@ -49,102 +50,49 @@ namespace Nucleus.Gaming
         {
             System.Threading.Tasks.Task.Run(() =>
             {
-                try
-                {
-                    KillRemainingGameProcess(currentGameInfo);
-                    Directory.Delete(path, true);
-                }
-                catch
-                {
-                    LogManager.Log("Nucleus will try to unlock one or more files in order to cleanup game content.");
-
-                    try
-                    {
-                        string[] instances = Directory.GetDirectories(path, "*", SearchOption.AllDirectories);
-
-                        foreach (string instance in instances)
-                        {
-                            if (Directory.Exists(instance))
-                            {
-                                string[] subs = Directory.GetFileSystemEntries(instance, "*", SearchOption.AllDirectories);
-
-                                foreach (string locked in subs)
-                                {
-                                    File.SetAttributes(locked, FileAttributes.Normal);
-                                }
-
-                                Directory.Delete(instance, true);
-                                LogManager.Log("Game content cleaned.");
-                            }
-                        }
-
-                        Directory.Delete(path, true);
-                    }
-                    catch
-                    {
-                        LogManager.Log("Game content cleanup failed. One or more files can't be unlocked by Nucleus.");
-
-                        System.Threading.Tasks.Task.Run(() =>
-                        {
-                            NucleusMessageBox.Show("Risk of crash!",
-                                $"One or more files from {path} are locked\n" +
-                                $"by the system or used by an other program \n" +
-                                $"and Nucleus failed to unlock them.You can try\n" +
-                                $"to delete/unlock the file(s) manually or restart\n" +
-                                $" your computer to unlock the file(s) because it\n" +
-                                $"could lead to a crash on game startup.\n" +
-                                $" You can ignore this message and risk a crash or unexpected behaviors.", false);
-                        });
-                    }
-                }
+                KillRemainingGameProcess(currentGameInfo);
+                DeleteSafely(path); // PlayOut Co-Op: never follows links/junctions into the game folder
             });
         }
 
-
         public static void CleanContentFolder(GenericGameInfo currentGameInfo)
         {
-            string path = Path.Combine(GameManager.Instance.GetAppContentPath(), currentGameInfo.GUID);
+            // PlayOut Co-Op: content\<GUID> (or <contentRoot>\<GUID>), deleted without ever following a symbolic link
+            // or junction into the original game folder (Nucleus's fallback enumerated through links, cleared
+            // attributes and recursively deleted folders under them).
+            string path = GameManager.Instance.GetGameContentPath(currentGameInfo.GUID);
 
             if (Directory.Exists(path))
             {
-                try
-                {
-                    Directory.Delete(path, true);
-                }
-                catch
-                {
-                    LogManager.Log("Nucleus will try to unlock one or more files in order to cleanup game content.");
-
-                    try
-                    {
-                        string[] instances = Directory.GetDirectories(path, "*", SearchOption.AllDirectories);
-
-                        foreach (string instance in instances)
-                        {
-                            if (Directory.Exists(instance))
-                            {
-                                string[] subs = Directory.GetFileSystemEntries(instance, "*", SearchOption.AllDirectories);
-
-                                foreach (string locked in subs)
-                                {
-                                    File.SetAttributes(locked, FileAttributes.Normal);
-                                }
-
-                                Directory.Delete(instance, true);
-                                LogManager.Log("Game content cleaned.");
-                            }
-                        }
-
-                        Directory.Delete(path, true);
-                    }
-                    catch
-                    {
-                        LogManager.Log("Game content cleanup failed. One or more files can't be unlocked by Nucleus.");
-                    }
-                }
+                DeleteSafely(path);
             }
         }
 
+        /// <summary>PlayOut Co-Op: GameLinks.DeleteTree with a few retries for files the exiting game still holds.</summary>
+        private static void DeleteSafely(string path)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    Headless.GameLinks.DeleteTree(path);
+                    LogManager.Log("Game content cleaned.");
+                    Headless.EngineUI.Log("LINK", "Deleted " + path);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    if (attempt >= 5)
+                    {
+                        LogManager.Log("Game content cleanup failed: " + ex.Message);
+                        Headless.EngineUI.Log("LINK", "Could not delete " + path + ": " + ex.Message);
+                        return;
+                    }
+
+                    System.Threading.Thread.Sleep(1000);
+                }
+            }
+        }
         private static void KillRemainingGameProcess(GenericGameInfo currentGameInfo)
         {
             try

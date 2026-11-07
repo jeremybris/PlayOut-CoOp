@@ -25,7 +25,7 @@ namespace PlayOutCoop
             "Usage:\n" +
             "  PlayOutCoop.exe devices --root <engineRoot>\n" +
             "  PlayOutCoop.exe inspect --root <engineRoot> --handler <path\\to\\GameName.js>\n" +
-            "  PlayOutCoop.exe play    --root <engineRoot> --job <path\\to\\job.json>";
+            "  PlayOutCoop.exe play    --root <engineRoot> --job <path\\to\\job.json> [--prompts auto|native] [--parent <pid>]";
 
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
@@ -59,6 +59,26 @@ namespace PlayOutCoop
                 return Fail("--root <engineRoot> is required.", 2);
             }
 
+            string prompts = (Arg(args, "--prompts") ?? "auto").Trim().ToLowerInvariant();
+            if (prompts != "auto" && prompts != "native")
+            {
+                return Fail($"--prompts must be auto or native, not '{prompts}'.", 2);
+            }
+
+            NativePrompts.Enabled = prompts == "native";
+
+            int? parentPid = null;
+            string parentArg = Arg(args, "--parent");
+            if (parentArg != null)
+            {
+                if (!int.TryParse(parentArg, NumberStyles.Integer, CultureInfo.InvariantCulture, out int pid) || pid <= 0)
+                {
+                    return Fail($"--parent must be a process id, not '{parentArg}'.", 2);
+                }
+
+                parentPid = pid;
+            }
+
             int code;
             try
             {
@@ -74,7 +94,7 @@ namespace PlayOutCoop
                 {
                     case "devices": code = Devices(); break;
                     case "inspect": code = Inspect(Arg(args, "--handler")); break;
-                    default: code = Play.Run(Arg(args, "--job")); break;
+                    default: code = Play.Run(Arg(args, "--job"), parentPid); break;
                 }
             }
             catch (Exception ex)

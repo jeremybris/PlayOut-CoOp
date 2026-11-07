@@ -1,5 +1,6 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
 // configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/Generic/GenericGameHandler.cs
+// Modified again 2026-11-07: SymlinkFoldersTo / HardlinkFoldersTo links through Headless.GameLinks (no elevation).
 using Jint.Native;
 using Microsoft.Win32;
 using Nucleus.Coop.Forms;
@@ -748,7 +749,7 @@ namespace Nucleus.Gaming
                         for (int f = 0; f < players.Count; f++)
                         {
                             string insFolder = Path.Combine(tempDir, "Instance" + f);
-                            Log(string.Format("Creating instance folder {0}", insFolder.Substring(insFolder.IndexOf("content\\"))));
+                            Log(string.Format("Creating instance folder {0}", insFolder)); // PlayOut Co-Op: the folder may be under a contentRoot
                             Directory.CreateDirectory(insFolder);
                         }
                     }
@@ -1091,7 +1092,7 @@ namespace Nucleus.Gaming
 
                             if (gen.SymlinkFolders)
                             {
-                                Platform.Windows.Interop.Kernel32Interop.CreateSymbolicLink(destinationPath, sourcePath, Platform.Windows.Interop.SymbolicLink.Directory);
+                                Headless.GameLinks.LinkDirectory(destinationPath, sourcePath); // PlayOut Co-Op: no elevation needed
                             }
                             else
                             {
@@ -1102,7 +1103,7 @@ namespace Nucleus.Gaming
                             {
                                 if (gen.SymlinkFolders)
                                 {
-                                    Platform.Windows.Interop.Kernel32Interop.CreateSymbolicLink(dirPath.Replace(sourcePath, destinationPath), dirPath, Platform.Windows.Interop.SymbolicLink.Directory);
+                                    Headless.GameLinks.LinkDirectory(dirPath.Replace(sourcePath, destinationPath), dirPath); // PlayOut Co-Op
                                 }
                                 else
                                 {
@@ -1111,7 +1112,7 @@ namespace Nucleus.Gaming
                             }
 
                             foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-                                Platform.Windows.Interop.Kernel32Interop.CreateSymbolicLink(newPath.Replace(sourcePath, destinationPath), newPath, Platform.Windows.Interop.SymbolicLink.File);
+                                Headless.GameLinks.LinkFile(newPath.Replace(sourcePath, destinationPath), newPath, false); // PlayOut Co-Op
                         }
                     }
 
@@ -1134,7 +1135,7 @@ namespace Nucleus.Gaming
 
                             foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
                             {
-                                Platform.Windows.Interop.Kernel32Interop.CreateHardLink(newPath.Replace(sourcePath, destinationPath), newPath, IntPtr.Zero);
+                                Headless.GameLinks.LinkFile(newPath.Replace(sourcePath, destinationPath), newPath, true); // PlayOut Co-Op: copy if no hard link
                             }
                         }
                     }

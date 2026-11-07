@@ -1,4 +1,7 @@
-﻿using Nucleus.Gaming.App.Settings;
+// Modified for PlayOut Co-Op, 2026-11-07 (GPL-3 s.5a): links go through Headless.GameLinks (unprivileged symbolic links,
+// else junctions for folders and hard links or copies for files; no elevation needed) and a folder that became a link
+// is not recursed into. See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Platform/IO/WinDirectoryUtil.cs
+using Nucleus.Gaming.App.Settings;
 using Nucleus.Gaming.Platform.Windows.Interop;
 using System;
 using System.IO;
@@ -85,14 +88,9 @@ namespace Nucleus.Gaming.Platform.Windows.IO
                 else
                 {
                     //CmdUtil.MkLinkFile(file.FullName, linkPath, out exitCode);
-                    if (hardLink)
-                    {
-                        Kernel32Interop.CreateHardLink(linkPath, file.FullName, IntPtr.Zero);
-                    }
-                    else
-                    {
-                        Kernel32Interop.CreateSymbolicLink(linkPath, file.FullName, Nucleus.Gaming.Platform.Windows.Interop.SymbolicLink.File);
-                    }
+                    // PlayOut Co-Op: hard link (HardlinkGame) or symbolic link, falling back to a hard link or a copy
+                    // when symbolic links are not allowed without elevation.
+                    Nucleus.Gaming.Headless.GameLinks.LinkFile(linkPath, file.FullName, hardLink);
                 }
             }
         }
@@ -150,7 +148,17 @@ namespace Nucleus.Gaming.Platform.Windows.IO
                 {
                     if (!special && !firstRun)
                     {
-                        Kernel32Interop.CreateSymbolicLink(destination, currentDir.FullName, Interop.SymbolicLink.Directory);
+                        // PlayOut Co-Op: symbolic link, or a junction when symbolic links are not allowed. The folder now
+                        // IS the original folder, so do not link files "into" it (Nucleus did, and every call failed or,
+                        // for copy-instead files, tried to copy a file onto itself).
+                        Nucleus.Gaming.Headless.LinkMethod m = Nucleus.Gaming.Headless.GameLinks.LinkDirectory(destination, currentDir.FullName);
+                        if (m == Nucleus.Gaming.Headless.LinkMethod.Symlink || m == Nucleus.Gaming.Headless.LinkMethod.Junction ||
+                            Nucleus.Gaming.Headless.GameLinks.IsReparsePoint(destination))
+                        {
+                            return;
+                        }
+
+                        Directory.CreateDirectory(destination);
                     }
                     else
                     {

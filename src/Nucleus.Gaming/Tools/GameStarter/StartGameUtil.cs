@@ -1,5 +1,8 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): HardlinkGame without SymlinkFolders starts StartGame.exe
 // without "runas" (no UAC prompt); StartGame() fails with a clear error instead of parsing a stale or missing PID line.
+// Modified again 2026-11-07: SymlinkGame links in-process through Headless.GameLinks, never elevated, unless
+// GameLinks.AllowElevation (job "allowElevation") asks for Nucleus's elevated StartGame.exe. UnlockGameFiles remembers the
+// attributes it clears on the original game files; RestoreGameFileAttributes() puts them back when the session ends.
 // See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/GameStarter/StartGameUtil.cs
 using Nucleus.Gaming.Forms;
 using System;
@@ -216,6 +219,16 @@ namespace Nucleus.Gaming.Tools.GameStarter
                     }
                 }
 
+                if (!Headless.GameLinks.AllowElevation)
+                {
+                    // PlayOut Co-Op: link in this process, never elevated (no UAC). Same walk as StartGame.exe's
+                    // "symlink" command (WinDirectoryUtil.LinkDirectory per instance), with GameLinks choosing
+                    // symbolic link / junction / hard link / copy per item.
+                    LinkInProcess(root, destination, dirExclusions, fileExclusions, fileCopyInstead, hardLink, symFolders, numPlayers);
+                    exitCode = 0;
+                    return true;
+                }
+
                 startInfo.Arguments = "\"" + "root|::|" + root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) /*+ "\" \"currentdir|::|" + currentDir */+ "\" \"destination|::|" + destination + "\" \"direxclusions|::|" + de + "\" \"fileexclusions|::|" + fe + "\" \"filecopyinstead|::|" + fc + "\" \"hardlink|::|" + hardLink + "\" \"symfolders|::|" + symFolders + "\" \"numplayers|::|" + numPlayers /*+ "\" \"overridespecial|::|" + overrideSpecial*/ + "\" \"symlink|::|" + "true";
                 //"\"" + "hook|::|" + hook + "\" \"delay|::|"
                 startInfo.UseShellExecute = true;
@@ -232,6 +245,30 @@ namespace Nucleus.Gaming.Tools.GameStarter
             }
 
             return true;
+        }
+
+        // PlayOut Co-Op: what StartGame.exe does for "symlink", without a separate (elevated) process.
+        private static void LinkInProcess(string root, string destination, string[] dirExclusions, string[] fileExclusions,
+            string[] fileCopyInstead, bool hardLink, bool symFolders, int numPlayers)
+        {
+            // StartGame.exe receives the lists joined with "|==|" and splits them again: an empty list arrives as {""},
+            // which WinDirectoryUtil relies on (it reads element 0).
+            string[] Norm(string[] a) => a == null || a.Length == 0 ? new[] { "" } : a;
+
+            string rootDir = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string parent = destination.Substring(0, destination.LastIndexOf('\\'));
+
+            Headless.GameLinks.ResetCounters();
+            Headless.EngineUI.Log("LINK", $"{(hardLink ? "Hard-linking" : "Linking")} {rootDir} into {numPlayers} instance folder(s) under {parent} (symlink folders: {symFolders}, no elevation)");
+            Stopwatch sw = Stopwatch.StartNew();
+
+            for (int p = 0; p < numPlayers; p++)
+            {
+                Platform.Windows.IO.WinDirectoryUtil.LinkDirectory(rootDir, new DirectoryInfo(rootDir), parent + "\\Instance" + p, out _,
+                    Norm(dirExclusions), Norm(fileExclusions), Norm(fileCopyInstead), hardLink, symFolders);
+            }
+
+            Headless.EngineUI.Log("LINK", $"Instance folders ready in {sw.ElapsedMilliseconds} ms: {Headless.GameLinks.Summary()}");
         }
 
         public static bool UnlockGameFiles(string origGameDir)
@@ -263,10 +300,59 @@ namespace Nucleus.Gaming.Tools.GameStarter
                     continue;
                 }
 
+                // PlayOut Co-Op: remember what we change in the original game folder, to put it back at the end.
+                FileAttributes before = File.GetAttributes(entry);
+                if (before != FileAttributes.Normal)
+                {
+                    lock (unlockedLock)
+                    {
+                        if (!unlockedAttributes.ContainsKey(entry))
+                        {
+                            unlockedAttributes[entry] = before;
+                        }
+                    }
+                }
+
                 File.SetAttributes(entry, FileAttributes.Normal);
             }
 
             return true;
+        }
+
+        // PlayOut Co-Op: original attributes of the game files UnlockGameFiles reset (read-only, archive, hidden...).
+        private static readonly object unlockedLock = new object();
+        private static readonly System.Collections.Generic.Dictionary<string, FileAttributes> unlockedAttributes =
+            new System.Collections.Generic.Dictionary<string, FileAttributes>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// PlayOut Co-Op: puts back the attributes UnlockGameFiles cleared on the original game files (Nucleus leaves
+        /// them all "Normal"). Called when the session has ended. Returns how many files were restored.
+        /// </summary>
+        public static int RestoreGameFileAttributes()
+        {
+            int restored = 0;
+            lock (unlockedLock)
+            {
+                foreach (System.Collections.Generic.KeyValuePair<string, FileAttributes> kv in unlockedAttributes)
+                {
+                    try
+                    {
+                        if (File.Exists(kv.Key) && File.GetAttributes(kv.Key) != kv.Value)
+                        {
+                            File.SetAttributes(kv.Key, kv.Value);
+                            restored++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Headless.EngineUI.Log("LINK", $"Could not restore the attributes of {kv.Key}: {ex.Message}");
+                    }
+                }
+
+                unlockedAttributes.Clear();
+            }
+
+            return restored;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
 // configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/InputManagement/Gamepads/GamepadShortcuts.cs
+// Modified again 2026-11-07: the stop shortcut marks the session as stopped by the user (HeadlessSession.NoteUserStop).
 using Nucleus.Coop.Forms;
 using Nucleus.Gaming.App.Settings;
 using Nucleus.Gaming.Tools.GlobalWindowMethods;
@@ -108,6 +109,7 @@ namespace Nucleus.Gaming.Coop.InputManagement.Gamepads
                             {
                                 if (GenericGameHandler.Instance != null)
                                 {
+                                    Nucleus.Gaming.Headless.HeadlessSession.NoteUserStop("gamepad shortcut"); // PlayOut Co-Op
                                     GenericGameHandler.Instance.End(true);
                                     EngineUI.Osd(1600, $"Session Ended");
                                 }

@@ -1,5 +1,6 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
 // configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/Generic/GenericGameInfo.cs
+// Modified again 2026-11-07: the game content folder (instance folders) follows GameManager.ContentRootOverride (job "contentRoot").
 using Jint;
 using Nucleus.Gaming.Coop;
 using Nucleus.Gaming.Coop.Generic;
@@ -741,7 +742,7 @@ namespace Nucleus.Gaming
         private string GetContentDir()
         {
             GameManager gameManager = GameManager.Instance;
-            string path = Path.Combine(gameManager.GetAppContentPath(), GUID);
+            string path = gameManager.GetGameContentPath(GUID); // PlayOut Co-Op
 
             if (Directory.Exists(path))
             {

@@ -1,5 +1,6 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
 // configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/GameManager.cs
+// Modified again 2026-11-07: the game content folder (instance folders) follows GameManager.ContentRootOverride (job "contentRoot").
 using Jint.Parser;
 using Microsoft.Win32;
 using Newtonsoft.Json;
@@ -501,8 +502,7 @@ namespace Nucleus.Gaming
 
         public void BeginBackup(GenericGameInfo game)
         {
-            string appData = GetAppContentPath();
-            string gamePath = Path.Combine(appData, game.GUID);
+            string gamePath = GetGameContentPath(game.GUID); // PlayOut Co-Op
             Directory.CreateDirectory(gamePath);
 
             backupFiles = new List<BackupFile>();
@@ -515,14 +515,21 @@ namespace Nucleus.Gaming
 
         public string GempTempFolder(GenericGameInfo game)
         {
-            string appData = GetAppContentPath();
-            return Path.Combine(appData, game.GUID);
+            return GetGameContentPath(game.GUID);
+        }
+
+        /// <summary>PlayOut Co-Op: folder under which the per-game content\<GUID> (instance folders) is created; null = the engine root's content folder.</summary>
+        public static string ContentRootOverride;
+
+        /// <summary>PlayOut Co-Op: content\<GUID>, or <ContentRootOverride>\<GUID>.</summary>
+        public string GetGameContentPath(string guid)
+        {
+            return Path.Combine(string.IsNullOrEmpty(ContentRootOverride) ? GetAppContentPath() : ContentRootOverride, guid);
         }
 
         public BackupFile BackupFile(GenericGameInfo game, string path)
         {
-            string appData = GetAppContentPath();
-            string gamePath = Path.Combine(appData, game.GUID);
+            string gamePath = GetGameContentPath(game.GUID); // PlayOut Co-Op
             string destination = Path.Combine(gamePath, Path.GetFileName(path));
 
             if (!File.Exists(path))
@@ -557,8 +564,7 @@ namespace Nucleus.Gaming
                 return;
             }
 
-            string appData = GetAppContentPath();
-            string gamePath = Path.Combine(appData, game.GUID);
+            string gamePath = GetGameContentPath(game.GUID); // PlayOut Co-Op
 
             for (int i = 0; i < backupFiles.Count; i++)
             {

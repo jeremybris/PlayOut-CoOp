@@ -24,6 +24,19 @@ namespace Nucleus.Gaming.Headless
         private readonly ManualResetEvent playFinishedEvent = new ManualResetEvent(false);
         private volatile bool stopRequested;
 
+        // Set by Nucleus's own stop shortcuts (Ctrl+E hotkey, gamepad stop shortcut): a user stop, not an exit.
+        private static volatile bool userStop;
+
+        /// <summary>
+        /// Called by Nucleus's stop hotkey / gamepad shortcut right before they call End(): the session then ends with
+        /// reason "stopped" instead of "exited".
+        /// </summary>
+        public static void NoteUserStop(string how)
+        {
+            userStop = true;
+            EngineUI.Log("SESSION", "Stop requested by the user (" + how + ")");
+        }
+
         public GenericGameHandler Handler { get; private set; }
         public UserGameInfo UserGame { get; private set; }
         public GameProfile Profile { get; private set; }
@@ -53,6 +66,7 @@ namespace Nucleus.Gaming.Headless
             }
 
             HeadlessSession session = new HeadlessSession { UserGame = userGame, Profile = profile };
+            userStop = false;
 
             GameProfile.Game = userGame.Game;
             GameProfile.GameInfo = userGame;
@@ -84,9 +98,16 @@ namespace Nucleus.Gaming.Headless
         {
             // End() before Play() returned, without Stop() = Nucleus aborted the launch (e.g. UnlockGameFiles failed).
             bool abortedDuringPlay = !playFinishedEvent.WaitOne(0);
-            EndReason = stopRequested ? "stopped" : (!string.IsNullOrEmpty(Handler?.error) || abortedDuringPlay ? "error" : "exited");
+            EndReason = stopRequested || userStop ? "stopped" : (!string.IsNullOrEmpty(Handler?.error) || abortedDuringPlay ? "error" : "exited");
             // Nucleus leaves the per-instance-exe DPI compatibility values in HKCU; put them back as they were.
             GameDpiAwareness.RestoreAll();
+            // Nucleus clears the attributes of every original game file (UnlockGameFiles); put them back.
+            try
+            {
+                int n = Tools.GameStarter.StartGameUtil.RestoreGameFileAttributes();
+                if (n > 0) EngineUI.Log("SESSION", $"Restored the attributes of {n} original game file(s)");
+            }
+            catch (Exception ex) { EngineUI.Log("ERROR", "Restoring game file attributes failed: " + ex.Message); }
             endedEvent.Set();
             try { Ended?.Invoke(EndReason); } catch { }
         }

@@ -144,9 +144,9 @@ session.Ended += reason => { Emit(ended(reason, session.Error)); Environment.Exi
   - `"stopped"`: `Stop()` was called;
   - `"error"`: `Play()` threw or returned an error, or the launch was aborted before `Play()` returned.
     `session.Error` holds the message, or `EngineUI.LastMessage` (the last error/warning dialog text);
-  - `"exited"`: every game process exited by itself (Nucleus's `exited == players.Count` check), or the user
-    pressed Nucleus's Ctrl+E hotkey.
-- **Prompts that block:** with the default answers, every `Prompt` continues at once. A handler that sets
+  - `"exited"`: every game process exited by itself (Nucleus's `exited == players.Count` check). Nucleus's Ctrl+E
+    hotkey and gamepad stop shortcut call `HeadlessSession.NoteUserStop` first, so they end as `"stopped"`.
+- **Prompts that block:** PlayOutCoop.exe `--prompts native` shows them as real dialogs (`src/PlayOutCoop/NativePrompts.cs`) from the `EngineUI.Handler` callback, which blocks the engine thread until answered. With the default answers, every `Prompt` continues at once. A handler that sets
   `PromptBetweenInstances`, `PromptAfterFirstInstance` or `ThirdPartyLaunch`, or that has a `Context.RunAdditionalFiles`
   prompt, expects the user to do something first. The CLI can make `EngineUI.Handler` block for `Kind == Prompt` until
   PlayOut answers (for example a `continue` stdin command). Blocking pauses the launch the way the modal dialog did.
@@ -199,7 +199,7 @@ candidate. Every request reaches `EngineUI.Handler` first (with `Kind`, `Title`,
 | (optional) | WPFDivFormThread (black split-division / `HideDesktop` background) | shown; set `EngineHostOptions.AllowBackgroundWindows = false` to skip |
 
 Still shown, because these are not Nucleus dialogs:
-- the Windows UAC prompt when a handler uses `SymlinkGame` / `HardlinkGame` (`StartGame.exe` runs elevated with `runas`);
+- the Windows UAC prompt for `SymlinkGame` only when the job sets `"allowElevation": true` (`StartGame.exe` elevated with `runas`, as upstream). By default the links are made in-process without elevation (`Headless/GameLinks`: unprivileged symbolic link, else junction / hard link / copy);
 - the elevation needed by `LaunchAsDifferentUsers*` and `ChangeIPPerInstance*`;
 - any `System.Windows.Forms.MessageBox` a handler script calls directly through Jint.
 
@@ -244,14 +244,24 @@ Still shown, because these are not Nucleus dialogs:
   - `HookFocus` / `SetWindowHook` → our `Nucleus.IJx86.exe` tier 1 → `Nucleus.Hook32.dll` loaded in both instances
     (checked in the instances' module lists).
 
+- Linking without UAC (2026-11-07, not elevated, `test/handlers/Coop Dummy Symlink.js` and `Coop Dummy SymFolders.js`
+  on a dummy game folder with a subfolder tree, sentinel files and a read-only file): unprivileged symbolic links
+  (Developer Mode on); with `PLAYOUTCOOP_NO_SYMLINKS=1` hard links for files and junctions for folders. After `stop`,
+  closed stdin, killed games, the parent exiting and the Ctrl+E hotkey, the original folder was byte-for-byte
+  identical (contents, attributes, link counts) and the content folder was gone. `contentRoot` (existing folder with
+  other content, and a missing nested one) and the overlap check.
+- `--prompts native` with `test/handlers/Coop Dummy Prompts.js`: file picker, text prompt, Yes/No question and
+  "Press OK" pause shown top-most and answered by sending Enter / IDCANCEL to the windows; the answers reached the
+  game (`--name TestName --answer 6`). A `stop` while the file picker was open closed it and ended the session.
+
 ## Known gaps
 
 - Not tested: real XInput/DInput pads (no hardware attached), ProtoInput, 64-bit games (`Nucleus.IJx64.exe` built
-  but not run), Goldberg/SSE/emulator handlers, SymlinkGame/HardlinkGame (UAC), multiple monitors, and real handlers
+  but not run), Goldberg/SSE/emulator handlers, multiple monitors, and real handlers
   from the hub.
 - SDL2 controllers: no enumeration or factory yet. `SDLManager` needs `SDL2.dll` and its init thread.
 - The CLI cannot see raw keyboard/mouse names for the HandleZero pseudo devices; pass `0x0` handles for the
   shared keyboard.
-- `Ended("exited")` also covers Nucleus's Ctrl+E hotkey stop.
+- Cross-volume copy fallback of `GameLinks` not exercised (the test machine has one volume); `allowElevation` not run (it shows UAC).
 - The Nucleus UI classes (`Controls/*`, `Forms/*`) are still compiled into `Nucleus.Gaming.dll`, unused when headless.
 - The hub update check (`MetaInfo.CheckUpdate`) is never triggered: handlers load with `checkUpdate = {false, false}`.

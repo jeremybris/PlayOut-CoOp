@@ -1,4 +1,6 @@
-﻿using Nucleus.Gaming.App.Settings;
+﻿// Modified for PlayOut Co-Op, 2026-11-07 (GPL-3 s.5a): the game content folder (instance folders) follows GameManager.ContentRootOverride (job "contentRoot").
+// See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/BackupDatas/BackupDatas.cs
+using Nucleus.Gaming.App.Settings;
 using Nucleus.Gaming.Coop;
 using System;
 using System.IO;
@@ -16,7 +18,7 @@ namespace Nucleus.Gaming.Tools.BackupDatas
             var handlerInstance = GenericGameHandler.Instance;
             string gameGUID = handlerInstance.CurrentGameInfo.GUID;
 
-            string gameContentPath = Path.Combine(GameManager.Instance.GetAppContentPath(), gameGUID);//game content root        
+            string gameContentPath = GameManager.Instance.GetGameContentPath(gameGUID) /* PlayOut Co-Op */;//game content root        
             
             var players = handlerInstance.profile.DevicesList;
 
@@ -77,7 +79,7 @@ namespace Nucleus.Gaming.Tools.BackupDatas
             var handlerInstance = GenericGameHandler.Instance;
             string gameGUID = handlerInstance.CurrentGameInfo.GUID;
 
-            string gameContentPath = Path.Combine(GameManager.Instance.GetAppContentPath(), gameGUID);//game content root
+            string gameContentPath = GameManager.Instance.GetGameContentPath(gameGUID) /* PlayOut Co-Op */;//game content root
 
             var players = handlerInstance.profile.DevicesList;
 
@@ -174,7 +176,7 @@ namespace Nucleus.Gaming.Tools.BackupDatas
             var handlerInstance = GenericGameHandler.Instance;
             string gameGUID = handlerInstance.CurrentGameInfo.GUID;
 
-            string gameContentPath = Path.Combine(GameManager.Instance.GetAppContentPath(), gameGUID);//game content root
+            string gameContentPath = GameManager.Instance.GetGameContentPath(gameGUID) /* PlayOut Co-Op */;//game content root
             
             var players = handlerInstance.profile.DevicesList;
 

@@ -15,7 +15,7 @@ This repository contains:
 | `src/Nucleus.Inject` | The injector, built twice as `Nucleus.IJx86.exe` and `Nucleus.IJx64.exe` | Nucleus Co-op `Master/Nucleus.Inject`, unchanged source |
 | `src/StartGame` | `StartGame.exe` (mutex killing, symlink/hardlink builder, hooked start) | Nucleus Co-op `Master/StartGame`, unchanged source |
 | `ThirdParty/easyhook` | EasyHook managed/native binaries (MIT) referenced at build time | Nucleus Co-op `Master/ThirdParty/easyhook` |
-| `test/CoopDummy`, `test/EngineSmoke`, `test/handlers` | A dummy game, an engine smoke test and two test handlers | PlayOut Co-Op (not shipped) |
+| `test/CoopDummy`, `test/EngineSmoke`, `test/handlers` | A dummy game, an engine smoke test and test handlers (copy, hard link, symlink, symlinked folders, hooks, prompts) | PlayOut Co-Op (not shipped) |
 | `CONTRACT.md` | The PlayOut ⇄ PlayOutCoop.exe interface | PlayOut |
 | `ENGINE-NOTES.md` | How to call the engine from the CLI | PlayOut Co-Op |
 
@@ -67,10 +67,31 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
   `GameProfile.CreateHeadless` / `GetSplit`, and `ImageCache` returning null for missing theme images.
 - **New code** in `src/Nucleus.Gaming/Headless`: `EngineHost` (init, default Settings.ini, handler loading),
   `HeadlessDevices` (screens, XInput, DirectInput, raw keyboards/mice and the `PlayerInfo` factories),
-  `HeadlessOptions`, `HeadlessSession` (start, stop, ended).
+  `HeadlessOptions`, `HeadlessSession` (start, stop, ended), `GameLinks` (links without elevation, safe cleanup).
 - **No UAC for hard links:** `StartGameUtil.SymlinkGame` starts `StartGame.exe` with `runas` only when symbolic links
   are made (`SymlinkGame`, or `HardlinkGame` with `SymlinkFolders`). Hard links to files need no elevation, so
   `HardlinkGame` handlers no longer show a UAC prompt.
+- **No UAC at all for linked games (2026-11-07):** `StartGameUtil.SymlinkGame` now links in-process (the same
+  `WinDirectoryUtil.LinkDirectory` walk StartGame.exe does) and never elevates, unless `GameLinks.AllowElevation`
+  (job `"allowElevation": true`) asks for the upstream elevated StartGame.exe. Every link goes through the new
+  `Headless/GameLinks`: an unprivileged symbolic link (`SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE`, Developer
+  Mode) first; when Windows refuses it, a directory junction for folders and a hard link (same volume) or a copy for
+  files. `HardlinkGame` falls back to copies too. `WinDirectoryUtil` no longer links files "into" a folder it just
+  made a link (Nucleus did; every such call failed or tried to copy a file onto itself). `SymlinkFoldersTo` /
+  `HardlinkFoldersTo` use the same helpers. The methods used are logged (`[LINK]`). Test switch:
+  `PLAYOUTCOOP_NO_SYMLINKS=1` behaves as if symbolic links were not allowed.
+- **Safe content cleanup (2026-11-07):** `CleanGameContent` deletes the content folder with `GameLinks.DeleteTree`,
+  which never enters a symbolic link or junction (it removes the link itself) and deletes read-only hard links without
+  clearing the read-only attribute of the original. Upstream's fallback enumerated through links, reset attributes and
+  recursively deleted folders under them, which could reach the original game folder.
+- **Original attributes restored (2026-11-07):** `StartGameUtil.UnlockGameFiles` (Nucleus resets every original game
+  file to `Normal`) remembers the old attributes; `RestoreGameFileAttributes()` puts them back when a headless session
+  ends.
+- **Configurable content folder (2026-11-07):** `GameManager.ContentRootOverride` / `GetGameContentPath(guid)`; every
+  use of `content\<GUID>` (instance folders, backups, BackupDatas, SDL2/DInput8 tools, cleanup) follows it (job
+  `"contentRoot"`).
+- **User stops (2026-11-07):** the Ctrl+E stop hotkey and the gamepad stop shortcut call
+  `HeadlessSession.NoteUserStop`, so the session ends as `stopped` instead of `exited`.
 - **Engine state stays in the engine root:** when headless, `GameMetaInfo` keeps `metaInfo.json` in the engine root
   instead of `%USERPROFILE%\NucleusCoop` (shared with an installed Nucleus Co-op).
 - **DPI values restored:** `GameDpiAwareness` remembers the `HKCU\…\AppCompatFlags\Layers` values it sets;
@@ -86,13 +107,15 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
 ```
 PlayOutCoop.exe devices --root <engineRoot>
 PlayOutCoop.exe inspect --root <engineRoot> --handler <engineRoot>\handlers\<GameName>.js
-PlayOutCoop.exe play    --root <engineRoot> --job <job.json>
+PlayOutCoop.exe play    --root <engineRoot> --job <job.json> [--prompts auto|native] [--parent <pid>]
 ```
 
 One JSON object per line on stdout (UTF-8, no BOM); diagnostics on stderr and in `<engineRoot>\logs\`. During
-`play`, write `stop` on stdin to end the session; closing stdin ends it too. Besides the contract's events, `play`
-reports every Nucleus dialog as `{"type":"ui","kind":...,"answer":...}` (auto-answered with its default) and OSD
-notices as `{"type":"status","osd":true,...}`. A `play` that fails before launching prints `error` and then
+`play`, write `stop` on stdin to end the session; closing stdin ends it too, and so does the `--parent` process
+exiting. With `--prompts auto` (default) `play` reports every Nucleus dialog as `{"type":"ui","kind":...,"answer":...}`
+(auto-answered with its default); with `--prompts native` the dialogs that wait for the player are shown as real
+top-most dialogs (`prompt` / `promptAnswered` events, see CONTRACT.md). OSD notices come as
+`{"type":"status","osd":true,...}`. A `play` that fails before launching prints `error` and then
 `{"type":"ended","reason":"error"}`. Before launching, `play` checks that the engine root holds the Nucleus files the
 handler needs (StartGame.exe, the injectors and hook DLLs, EasyHook, ProtoInput when the handler uses it, the
 `utils\` tool folders it enables) and fails with an `error` naming the missing ones. Exit codes: 0 success, 1 failure,

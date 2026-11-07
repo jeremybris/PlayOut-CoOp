@@ -1,5 +1,6 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless changes (dialogs/OSD through Headless.EngineUI,
 // configurable install root). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Forms/HotkeyListener.cs
+// Modified again 2026-11-07: the stop hotkey marks the session as stopped by the user (HeadlessSession.NoteUserStop).
 using Nucleus.Coop.Forms;
 using Nucleus.Gaming.App.Settings;
 using Nucleus.Gaming.Coop.InputManagement;
@@ -182,6 +183,7 @@ namespace Nucleus.Gaming.Forms
 
                     case HotkeysRegistration.StopSession_HotkeyID:
                         UnregisterHotkeys();
+                        Nucleus.Gaming.Headless.HeadlessSession.NoteUserStop("Ctrl+E hotkey"); // PlayOut Co-Op: report "stopped"
                         GenericGameHandler.Instance?.End(false);
                         EngineUI.Osd(2000, "Session Ended");
                         break;
