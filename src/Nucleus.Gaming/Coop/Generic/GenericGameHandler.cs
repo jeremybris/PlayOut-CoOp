@@ -2242,13 +2242,8 @@ namespace Nucleus.Gaming
 
                         if (gen.PromptBetweenInstances)
                         {
-                            if (gen.PauseBetweenStarts > 0)
-                            {
-                                Log(string.Format("Pausing for {0} seconds", gen.PauseBetweenStarts));
-                                Thread.Sleep(TimeSpan.FromSeconds(gen.PauseBetweenStarts));
-                            }
                             Log(string.Format("Prompted user for Instance {0}", (i + 2)));
-                            EngineUI.Prompt("Press OK when ready to launch instance " + (i + 2) + ".");
+                            PromptWithMinimumPause("Press OK when ready to launch instance " + (i + 2) + ".", gen.PauseBetweenStarts);
                         }
                         else
                         {
@@ -2662,27 +2657,15 @@ namespace Nucleus.Gaming
 
                 if (gen.PromptBetweenInstances && i < (players.Count - 1))
                 {
-                    if (gen.PauseBetweenStarts > 0)
-                    {
-                        Log(string.Format("Pausing for {0} seconds", gen.PauseBetweenStarts));
-                        Thread.Sleep(TimeSpan.FromSeconds(gen.PauseBetweenStarts));
-                    }
-
                     Log(string.Format("Prompted user for Instance {0}", (i + 2)));
 
-                    EngineUI.Prompt("Press OK when ready to launch instance " + (i + 2) + ".");
+                    PromptWithMinimumPause("Press OK when ready to launch instance " + (i + 2) + ".", gen.PauseBetweenStarts);
                 }
                 else if (gen.PromptBetweenInstances && i == players.Count - 1 && (gen.HookFocus || gen.FakeFocus || gen.SetWindowHook || gen.HideCursor || gen.PreventWindowDeactivation || gen.SetTopMostAtEnd))
                 {
-                    if (gen.PauseBetweenStarts > 0)
-                    {
-                        Log(string.Format("Pausing for {0} seconds", gen.PauseBetweenStarts));
-                        Thread.Sleep(TimeSpan.FromSeconds(gen.PauseBetweenStarts));
-                    }
-
                     Log("Prompted user to install post hooks");
 
-                    EngineUI.Prompt("Press OK when ready to install hooks and/or start sending fake messages.");
+                    PromptWithMinimumPause("Press OK when ready to install hooks and/or start sending fake messages.", gen.PauseBetweenStarts);
 
                     foreach (Process aproc in attached)
                     {
@@ -3612,6 +3595,24 @@ namespace Nucleus.Gaming
         
         public void Log(StreamWriter writer)
         {
+        }
+
+        /// <summary>
+        /// PlayOut Co-Op: a "Press OK when ready" prompt that also keeps the handler's pause. Nucleus slept the whole
+        /// pause and only then asked, so players waited the pause plus however long they took to answer. Here the
+        /// prompt shows at once and the pause runs alongside it: the next step still starts no sooner than
+        /// <paramref name="pauseSeconds"/> after this point (what the handler relies on), and no later than needed.
+        /// </summary>
+        private void PromptWithMinimumPause(string message, int pauseSeconds)
+        {
+            Stopwatch waited = Stopwatch.StartNew();
+            EngineUI.Prompt(message);
+            TimeSpan left = TimeSpan.FromSeconds(Math.Max(0, pauseSeconds)) - waited.Elapsed;
+            if (left > TimeSpan.Zero)
+            {
+                Log(string.Format("Pausing for the remaining {0:0.#} of {1} seconds", left.TotalSeconds, pauseSeconds));
+                Thread.Sleep(left);
+            }
         }
 
         public void Log(string logMessage)
