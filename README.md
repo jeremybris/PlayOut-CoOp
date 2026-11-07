@@ -86,6 +86,11 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
   before copying anything, when that would leave less than 2 GB free. `GameLinks.LinkFile` checks the free space again
   before every copy. Test switches: `PLAYOUTCOOP_NO_HARDLINKS=1` (as if hard links were not possible) and
   `PLAYOUTCOOP_COPY_RESERVE_MB=<n>` (the space kept free).
+- **Prompt and pause together (2026-11-07, later):** with `PromptBetweenInstances` (and the final "install hooks"
+  prompt), Nucleus slept `PauseBetweenStarts` and only then showed the prompt, so players waited the pause plus their
+  own answer (30-50 s handlers made every instance slow). `GenericGameHandler.PromptWithMinimumPause` shows the prompt
+  at once and runs the pause alongside it: the next instance still starts no sooner than the pause after the previous
+  one, and no later than needed.
 - **Safe content cleanup (2026-11-07):** `CleanGameContent` deletes the content folder with `GameLinks.DeleteTree`,
   which never enters a symbolic link or junction (it removes the link itself) and deletes read-only hard links without
   clearing the read-only attribute of the original. Upstream's fallback enumerated through links, reset attributes and
