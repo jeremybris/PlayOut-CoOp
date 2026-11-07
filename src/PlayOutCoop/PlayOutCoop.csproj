@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- PlayOutCoop.exe: the command-line helper PlayOut drives (CONTRACT.md). GPL-3, built on the Nucleus Co-op engine.
+       32-bit like NucleusCoop.exe: parts of Nucleus assume a 32-bit host (see ENGINE-NOTES.md). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>PlayOutCoop</AssemblyName>
+    <RootNamespace>PlayOutCoop</RootNamespace>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>true</Prefer32Bit>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Product>PlayOut Co-Op</Product>
+    <Description>PlayOut Co-Op helper (GPL-3), built on the Nucleus Co-op engine</Description>
+    <Copyright>GPL-3.0. Based on Nucleus Co-op (SplitScreen.Me and contributors).</Copyright>
+    <Version>1.0.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Nucleus.Gaming\Nucleus.Gaming.csproj" />
+    <!-- The tools Nucleus starts at runtime; referenced so they build with the CLI (not loaded by it). -->
+    <ProjectReference Include="..\StartGame\StartGame.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Nucleus.Inject\x86\Nucleus.IJx86.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Nucleus.Inject\x64\Nucleus.IJx64.csproj" ReferenceOutputAssembly="false" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+</Project>

@@ -1,4 +1,6 @@
-﻿using Nucleus.Gaming.Forms;
+﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): HardlinkGame without SymlinkFolders starts StartGame.exe
+// without "runas" (no UAC prompt). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/GameStarter/StartGameUtil.cs
+using Nucleus.Gaming.Forms;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -204,7 +206,12 @@ namespace Nucleus.Gaming.Tools.GameStarter
                 startInfo.Arguments = "\"" + "root|::|" + root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) /*+ "\" \"currentdir|::|" + currentDir */+ "\" \"destination|::|" + destination + "\" \"direxclusions|::|" + de + "\" \"fileexclusions|::|" + fe + "\" \"filecopyinstead|::|" + fc + "\" \"hardlink|::|" + hardLink + "\" \"symfolders|::|" + symFolders + "\" \"numplayers|::|" + numPlayers /*+ "\" \"overridespecial|::|" + overrideSpecial*/ + "\" \"symlink|::|" + "true";
                 //"\"" + "hook|::|" + hook + "\" \"delay|::|"
                 startInfo.UseShellExecute = true;
-                startInfo.Verb = "runas";
+                // PlayOut Co-Op: hard links to files need no elevation, so UAC is only requested when symbolic links
+                // are made (SymlinkGame, or HardlinkGame with SymlinkFolders).
+                if (!hardLink || symFolders)
+                {
+                    startInfo.Verb = "runas";
+                }
                 startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 Process proc = Process.Start(startInfo);//TODO: can throw error
 

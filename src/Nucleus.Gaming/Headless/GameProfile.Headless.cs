@@ -244,11 +244,11 @@ namespace Nucleus.Gaming.Coop
             for (int i = 0; i < players.Count; i++)
             {
                 HeadlessPlayerSlot slot = players[i];
-                PlayerInfo player = slot.Player ?? throw new ArgumentException($"Player {i}: no PlayerInfo.");
+                PlayerInfo player = slot.Player ?? throw new ArgumentException($"Player {i + 1}: no PlayerInfo.");
 
                 if (slot.ScreenIndex < 0 || slot.ScreenIndex >= screens.Length)
                 {
-                    throw new ArgumentException($"Player {i}: screen {slot.ScreenIndex} does not exist ({screens.Length} screens).");
+                    throw new ArgumentException($"Player {i + 1}: screen {slot.ScreenIndex} does not exist ({screens.Length} screens).");
                 }
 
                 UserScreen screen = screens[slot.ScreenIndex];
@@ -256,7 +256,7 @@ namespace Nucleus.Gaming.Coop
 
                 if (slot.Slot < 0 || slot.Slot >= split.Count)
                 {
-                    throw new ArgumentException($"Player {i}: slot {slot.Slot} does not exist in layout {screen.Type} ({split.Count} slots).");
+                    throw new ArgumentException($"Player {i + 1}: slot {slot.Slot} does not exist in layout {screen.Type} ({split.Count} slots).");
                 }
 
                 Rectangle destMonitorBounds = split[slot.Slot].Key;
@@ -264,7 +264,7 @@ namespace Nucleus.Gaming.Coop
 
                 if (AssignedDevices.Any(p => p.MonitorBounds == destMonitorBounds))
                 {
-                    throw new ArgumentException($"Player {i}: screen {slot.ScreenIndex} slot {slot.Slot} is already taken.");
+                    throw new ArgumentException($"Player {i + 1}: screen {slot.ScreenIndex} slot {slot.Slot} is already taken.");
                 }
 
                 // BoundsFunctions.AddPlayer

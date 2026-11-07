@@ -68,13 +68,35 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
 - **New code** in `src/Nucleus.Gaming/Headless`: `EngineHost` (init, default Settings.ini, handler loading),
   `HeadlessDevices` (screens, XInput, DirectInput, raw keyboards/mice and the `PlayerInfo` factories),
   `HeadlessOptions`, `HeadlessSession` (start, stop, ended).
+- **No UAC for hard links:** `StartGameUtil.SymlinkGame` starts `StartGame.exe` with `runas` only when symbolic links
+  are made (`SymlinkGame`, or `HardlinkGame` with `SymlinkFolders`). Hard links to files need no elevation, so
+  `HardlinkGame` handlers no longer show a UAC prompt.
+- **New program** `src/PlayOutCoop`: `PlayOutCoop.exe`, the command-line helper implementing
+  [CONTRACT.md](CONTRACT.md) (`devices`, `inspect`, `play`).
+
+## PlayOutCoop.exe
+
+```
+PlayOutCoop.exe devices --root <engineRoot>
+PlayOutCoop.exe inspect --root <engineRoot> --handler <engineRoot>\handlers\<GameName>.js
+PlayOutCoop.exe play    --root <engineRoot> --job <job.json>
+```
+
+One JSON object per line on stdout (UTF-8, no BOM); diagnostics on stderr and in `<engineRoot>\logs\`. During
+`play`, write `stop` on stdin to end the session; closing stdin ends it too. Besides the contract's events, `play`
+reports every Nucleus dialog as `{"type":"ui","kind":...,"answer":...}` (auto-answered with its default) and OSD
+notices as `{"type":"status","osd":true,...}`. A `play` that fails before launching prints `error` and then
+`{"type":"ended","reason":"error"}`. Exit codes: 0 success, 1 failure, 2 bad command line.
 
 ## Build
 
 Requirements: the .NET 8 SDK (or newer) on Windows. No Visual Studio or C++ toolchain is needed.
 
 ```
-dotnet build PlayOutCoop.sln -c Release
+powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-Shipped outputs land in `bin\Release\`; the test projects build into `bin\test\Release\`.
+This runs `dotnet build PlayOutCoop.sln -c Release` and copies everything PlayOut ships into `dist\`:
+`PlayOutCoop.exe`, `Nucleus.Gaming.dll`, Jint, the other managed dependencies, `Nucleus.IJx86.exe`,
+`Nucleus.IJx64.exe`, `StartGame.exe`, `EasyHook.dll`, `LICENSE`, `README.md` and `CONTRACT.md`. The test projects build
+into `bin\test\Release\` and are not shipped.
