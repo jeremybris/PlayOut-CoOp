@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- StartGame.exe (Nucleus Co-op Master/StartGame, GPL-3): mutex killing, symlink/hardlink builder, hooked startup. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Nucleus.Coop.StartGame</RootNamespace>
+    <AssemblyName>StartGame</AssemblyName>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>true</Prefer32Bit>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EasyHook"><HintPath>$(EasyHookDir)EasyHook.dll</HintPath></Reference>
+    <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Nucleus.Gaming\Nucleus.Gaming.csproj" />
+  </ItemGroup>
+</Project>

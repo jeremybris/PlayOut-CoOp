@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Nucleus.Inject (Nucleus Co-op Master/Nucleus.Inject, GPL-3) built as Nucleus.IJx86.exe, as Nucleus's post-build step names it. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Nucleus.Inject</RootNamespace>
+    <AssemblyName>Nucleus.IJx86</AssemblyName>
+    <PlatformTarget>x86</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Program.cs" />
+    <Compile Include="..\Properties\AssemblyInfo.cs" />
+    <None Include="..\app.config" Link="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="EasyHook"><HintPath>$(EasyHookDir)EasyHook.dll</HintPath></Reference>
+    <Reference Include="System.Runtime.Remoting" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Nucleus.Gaming\Nucleus.Gaming.csproj" />
+  </ItemGroup>
+</Project>

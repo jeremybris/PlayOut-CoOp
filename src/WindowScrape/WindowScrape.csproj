@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Copied from Nucleus Co-op Master/ThirdParty/WindowScrape (GPL-3 distribution). -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <RootNamespace>WindowScrape</RootNamespace>
+    <AssemblyName>WindowScrape</AssemblyName>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>ScrapeKey.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+</Project>
