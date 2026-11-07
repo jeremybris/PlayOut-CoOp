@@ -1,5 +1,6 @@
 ﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): HardlinkGame without SymlinkFolders starts StartGame.exe
-// without "runas" (no UAC prompt). See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/GameStarter/StartGameUtil.cs
+// without "runas" (no UAC prompt); StartGame() fails with a clear error instead of parsing a stale or missing PID line.
+// See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Tools/GameStarter/StartGameUtil.cs
 using Nucleus.Gaming.Forms;
 using System;
 using System.Diagnostics;
@@ -135,6 +136,12 @@ namespace Nucleus.Gaming.Tools.GameStarter
                 startInfo.RedirectStandardOutput = true;
                 startInfo.UseShellExecute = false;
 
+                if (!File.Exists(startGamePath))
+                {
+                    throw new FileNotFoundException("StartGame.exe is missing from the engine root.", startGamePath);
+                }
+
+                lastLine = null; // PlayOut Co-Op: never return the previous instance's PID
                 Process proc = Process.Start(startInfo);
 
                 proc.OutputDataReceived += Proc_OutputDataReceived;
@@ -143,7 +150,13 @@ namespace Nucleus.Gaming.Tools.GameStarter
                 proc.WaitForExit();
 
                 //parse the last line for the process ID
-                return uint.Parse(lastLine.Split(':')[1]);
+                string[] parts = lastLine?.Split(':');
+                if (parts == null || parts.Length < 2 || !uint.TryParse(parts[parts.Length - 1].Trim(), out uint pid))
+                {
+                    throw new InvalidOperationException("StartGame.exe could not start the game" + (string.IsNullOrEmpty(lastLine) ? "." : ": " + lastLine));
+                }
+
+                return pid;
             }
         }
 

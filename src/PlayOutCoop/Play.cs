@@ -75,6 +75,14 @@ namespace PlayOutCoop
 
             Output.Emit(new { type = "status", message = "Loading handler " + Path.GetFileName(job.Handler) });
             GenericGameInfo game = EngineHost.LoadHandler(Path.GetFullPath(job.Handler));
+
+            List<string> missing = Preflight.MissingFiles(game);
+            if (missing.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"The engine root is missing Nucleus files this handler needs: {string.Join(", ", missing)} " +
+                    $"(in {EngineHost.EngineRoot}). Re-extract the Nucleus Co-op release (NucleusApp.zip) there.");
+            }
             UserGameInfo userGame = EngineHost.CreateUserGame(game, Path.GetFullPath(job.ExePath));
 
             UserScreen[] screens = HeadlessDevices.GetUserScreens();
@@ -141,9 +149,11 @@ namespace PlayOutCoop
             {
                 if (string.IsNullOrEmpty(err))
                 {
-                    if (!session.HasEnded)
+                    // Not after a stop that arrived during the launch: Play() then returns with no (or killed) instances.
+                    List<int> pids = session.Pids;
+                    if (!session.HasEnded && !StopRequested.WaitOne(0))
                     {
-                        Output.Emit(new { type = "started", pids = session.Pids });
+                        Output.Emit(new { type = "started", pids });
                     }
                 }
                 else
@@ -178,6 +188,9 @@ namespace PlayOutCoop
             {
                 Output.Emit(new { type = "error", message = session.Error ?? "The launch was aborted.", fatal = true });
             }
+
+            // Also covers a Stop() that timed out before Nucleus's End() finished (idempotent).
+            GameDpiAwareness.RestoreAll();
 
             Output.Emit(new { type = "ended", reason = endReason });
             return endReason == "error" ? 1 : 0;

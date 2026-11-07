@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): a failed launch is reported on stdout instead of a MessageBox.
+// See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/StartGame/Program.cs
+using Microsoft.Win32;
 using Nucleus;
 using Nucleus.Gaming;
 using Nucleus.Gaming.App.Settings;
@@ -594,7 +596,10 @@ namespace StartGame
                 }
                 else
                 {
-                    MessageBox.Show("Nucleus was unable to launch and/or find the proper process for this instance. Please close Nucleus and try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    // PlayOut Co-Op: no MessageBox (it would block StartGameUtil.StartGame, which waits for this process
+                    // to exit). The engine parses the last stdout line, so the failure is reported there instead.
+                    Log("ERROR - Unable to launch and/or find the proper process for this instance: " + ex.Message);
+                    Console.WriteLine("Error: unable to launch and/or find the proper process for this instance (" + ex.Message + ")");
                 }
             }
         }

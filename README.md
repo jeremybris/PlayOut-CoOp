@@ -71,6 +71,13 @@ verbatim import, so `git diff 51fb005` shows every change). Each modified upstre
 - **No UAC for hard links:** `StartGameUtil.SymlinkGame` starts `StartGame.exe` with `runas` only when symbolic links
   are made (`SymlinkGame`, or `HardlinkGame` with `SymlinkFolders`). Hard links to files need no elevation, so
   `HardlinkGame` handlers no longer show a UAC prompt.
+- **Engine state stays in the engine root:** when headless, `GameMetaInfo` keeps `metaInfo.json` in the engine root
+  instead of `%USERPROFILE%\NucleusCoop` (shared with an installed Nucleus Co-op).
+- **DPI values restored:** `GameDpiAwareness` remembers the `HKCU\…\AppCompatFlags\Layers` values it sets;
+  `RestoreAll()` (called when a headless session ends) deletes the new ones and puts back the old data of the others.
+- **No blocking dialog from StartGame.exe:** a failed launch is printed on stdout instead of a `MessageBox` (which
+  blocked the engine, waiting for StartGame.exe to exit). `StartGameUtil.StartGame` no longer reuses the previous
+  instance's PID line and fails with a clear message when StartGame.exe is missing or printed no PID.
 - **New program** `src/PlayOutCoop`: `PlayOutCoop.exe`, the command-line helper implementing
   [CONTRACT.md](CONTRACT.md) (`devices`, `inspect`, `play`).
 
@@ -86,7 +93,10 @@ One JSON object per line on stdout (UTF-8, no BOM); diagnostics on stderr and in
 `play`, write `stop` on stdin to end the session; closing stdin ends it too. Besides the contract's events, `play`
 reports every Nucleus dialog as `{"type":"ui","kind":...,"answer":...}` (auto-answered with its default) and OSD
 notices as `{"type":"status","osd":true,...}`. A `play` that fails before launching prints `error` and then
-`{"type":"ended","reason":"error"}`. Exit codes: 0 success, 1 failure, 2 bad command line.
+`{"type":"ended","reason":"error"}`. Before launching, `play` checks that the engine root holds the Nucleus files the
+handler needs (StartGame.exe, the injectors and hook DLLs, EasyHook, ProtoInput when the handler uses it, the
+`utils\` tool folders it enables) and fails with an `error` naming the missing ones. Exit codes: 0 success, 1 failure,
+2 bad command line.
 
 ## Build
 

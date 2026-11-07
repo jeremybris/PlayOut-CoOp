@@ -85,6 +85,8 @@ namespace Nucleus.Gaming.Headless
             // End() before Play() returned, without Stop() = Nucleus aborted the launch (e.g. UnlockGameFiles failed).
             bool abortedDuringPlay = !playFinishedEvent.WaitOne(0);
             EndReason = stopRequested ? "stopped" : (!string.IsNullOrEmpty(Handler?.error) || abortedDuringPlay ? "error" : "exited");
+            // Nucleus leaves the per-instance-exe DPI compatibility values in HKCU; put them back as they were.
+            GameDpiAwareness.RestoreAll();
             endedEvent.Set();
             try { Ended?.Invoke(EndReason); } catch { }
         }

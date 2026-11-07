@@ -1,4 +1,6 @@
-﻿using Jint.Native;
+﻿// Modified for PlayOut Co-Op, 2026-11-06 (GPL-3 s.5a): headless engines keep metaInfo.json in the engine root.
+// See README.md "Changes from Nucleus Co-op". Original: Nucleus Co-op Master/NucleusGaming/Coop/GameMetaInfo.cs
+using Jint.Native;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nucleus.Gaming.App.Settings;
@@ -14,7 +16,9 @@ namespace Nucleus.Gaming.Coop
 {
     public class GameMetaInfo
     {
-        private readonly string nucleusEnvironment = $@"{Globals.UserEnvironmentRoot}\NucleusCoop";
+        // PlayOut Co-Op: a headless engine keeps metaInfo.json in its engine root, not in %USERPROFILE%\NucleusCoop
+        // (which an installed Nucleus Co-op shares).
+        private readonly string nucleusEnvironment = Headless.EngineUI.Headless ? Globals.NucleusInstallRoot : $@"{Globals.UserEnvironmentRoot}\NucleusCoop";
 #if DEBUG
  private readonly string metaInfoJson = "metaInfo_DEBUG.json";
 #else

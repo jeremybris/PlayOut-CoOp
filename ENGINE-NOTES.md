@@ -208,8 +208,11 @@ Still shown, because these are not Nucleus dialogs:
 - `Play()` starts by killing every running process named like the game exe, launcher or `KillProcessesOnClose`
   (`ProcessUtil.KillRemainingProcess`).
 - For each instance exe, `HKCU\…\AppCompatFlags\Layers` gets a `~ HIGHDPIAWARE` value (`GameDpiAwareness`).
-- `%USERPROFILE%\NucleusCoop\metaInfo.json` gets a play-time entry per handler GUID. Per-player environments live
-  in `%USERPROFILE%\NucleusCoop\<nickname>`.
+  PlayOut Co-Op change: `HeadlessSession` calls `GameDpiAwareness.RestoreAll()` when the session ends, so these are
+  removed (or restored) again.
+- `metaInfo.json` gets an entry per handler GUID (also from `inspect`). Headless, it lives in the engine root
+  (PlayOut Co-Op change; upstream: `%USERPROFILE%\NucleusCoop`). Per-player environments (`UseNucleusEnvironment`)
+  still live in `%USERPROFILE%\NucleusCoop\<nickname>`, as handlers expect.
 - In the engine root: `debug-log.txt`, `debug-log-startup-hook.txt` (`DebugLog=True` in the default Settings.ini),
   `content\app.log`, `content\userprofile.json` and `content\<GUID>\Instance<N>` (deleted at End).
 
